@@ -7,8 +7,7 @@ datarootdir = $(prefix)/share
 datadir = $(datarootdir)
 includedir = $(prefix)/include
 mandir = $(datarootdir)/man
-
-libdir = /usr/lib
+libdir = $(prefix)/lib
 
 BIN=bin
 OBJ=obj
