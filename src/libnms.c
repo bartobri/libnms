@@ -46,9 +46,10 @@ struct interval {
 
 
 // Function prototypes (internal)
-char *getMaskChar(void);
-int getColorByName(char *);
-int mk_wcwidth(wchar_t);
+char *nms_get_mask_char(void);
+int nms_get_color_by_name(char *);
+int nms_mk_wcwidth(wchar_t);
+static int nms_bisearch(wchar_t, const struct interval *, int);
 
 /*
  * void nms_exec(NmsArgs *)
@@ -99,7 +100,7 @@ char nms_exec(NmsArgs *args) {
 	// Setting up and starting colors if terminal supports them
 	if (has_colors()) {
 		start_color();
-		init_pair(1, getColorByName(args->foreground_color), COLOR_BLACK);
+		init_pair(1, nms_get_color_by_name(args->foreground_color), COLOR_BLACK);
 	}
 
 	// Get terminal window size
@@ -176,7 +177,7 @@ char nms_exec(NmsArgs *args) {
 				list_pointer->source[1] = '\0';
 			}
 
-			list_pointer->mask = getMaskChar();
+			list_pointer->mask = nms_get_mask_char();
 			list_pointer->row = y;
 			list_pointer->col = x;
 			list_pointer->s1_time = r_time > 1000 ? r_time_l : r_time;
@@ -185,7 +186,7 @@ char nms_exec(NmsArgs *args) {
 
 			wchar_t widec[sizeof(list_pointer->source)] = {};
 			mbstowcs(widec, list_pointer->source, sizeof(list_pointer->source));
-			if (mk_wcwidth(*widec) == 2)
+			if (nms_mk_wcwidth(*widec) == 2)
 				++x;
 
 			if (++x >= termSizeCols) {
@@ -200,7 +201,7 @@ char nms_exec(NmsArgs *args) {
 	while (list_pointer != NULL && list_pointer->row <= termSizeRows) {
 		mvaddstr(list_pointer->row, list_pointer->col, list_pointer->mask);
 		refresh();
-		list_pointer->mask = getMaskChar();
+		list_pointer->mask = nms_get_mask_char();
 		list_pointer = list_pointer->next;
 		usleep(TYPE_EFFECT_SPEED * 1000);
 	}
@@ -221,7 +222,7 @@ char nms_exec(NmsArgs *args) {
 		list_pointer = start;
 		while (list_pointer != NULL && list_pointer->row <= termSizeRows) {
 			mvaddstr(list_pointer->row, list_pointer->col, list_pointer->mask);
-			list_pointer->mask = getMaskChar();
+			list_pointer->mask = nms_get_mask_char();
 			list_pointer = list_pointer->next;
 		}
 		refresh();
@@ -241,12 +242,12 @@ char nms_exec(NmsArgs *args) {
 				loop = true;
 				list_pointer->s1_time -= REVEAL_LOOP_SPEED;
 				if (list_pointer->s1_time % s1_remask_time == 0) {
-					list_pointer->mask = getMaskChar();
+					list_pointer->mask = nms_get_mask_char();
 				}
 			} else if (list_pointer->s2_time > 0) {
 				loop = true;
 				list_pointer->s2_time -= REVEAL_LOOP_SPEED;
-				list_pointer->mask = getMaskChar();
+				list_pointer->mask = nms_get_mask_char();
 			} else {
 				list_pointer->mask = list_pointer->source;
 				attron(A_BOLD);
@@ -326,13 +327,13 @@ char nms_exec(NmsArgs *args) {
 }
 
 /*
- * char *getMaskChar(void)
+ * char *nms_get_mask_char(void)
  *
  * DESCR:
  * Returns a random character from the maskChars string. 
  *
  */
-char *getMaskChar(void) {
+char *nms_get_mask_char(void) {
 	char *maskChars[] = {
 		"!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", "~",
 		".", "/", ":", ";", "<", "=", ">", "?", "[", "\\", "]", "_", "{", "}",
@@ -374,7 +375,7 @@ char *getMaskChar(void) {
 }
 
 /*
- * char getColorByName(char *string, int fallback)
+ * char nms_get_color_by_name(char *string, int fallback)
  *
  * ARGS:
  *
@@ -384,7 +385,7 @@ char *getMaskChar(void) {
  * Returns an ncurses color by its name.
  *
  */
-int getColorByName(char *string) {
+int nms_get_color_by_name(char *string) {
 
 	if(string == NULL) {
 		return COLOR_BLUE;
@@ -421,35 +422,6 @@ int getColorByName(char *string) {
 	return COLOR_BLUE;
 }
 
-/*
- * static int bisearch(wchar_t ucs, const struct interval *table, int max)
- *
- * DESCR:
- * auxiliary function for binary search in interval table 
- *
- * Copied from: https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
- */
-static int bisearch(wchar_t ucs, const struct interval *table, int max) {
-	int min = 0;
-	int mid;
-
-	if (ucs < table[0].first || ucs > table[max].last)
-		return 0;
-
-	while (max >= min) {
-		mid = (min + max) / 2;
-
-		if (ucs > table[mid].last)
-			min = mid + 1;
-		else if (ucs < table[mid].first)
-			max = mid - 1;
-		else
-			return 1;
-	}
-
-	return 0;
-}
-
 /* The following function defines the column width of an ISO 10646
  * character as follows:
  *
@@ -479,7 +451,7 @@ static int bisearch(wchar_t ucs, const struct interval *table, int max) {
  * This implementation assumes that wchar_t characters are encoded
  * in ISO 10646.
  */
-int mk_wcwidth(wchar_t ucs) {
+int nms_mk_wcwidth(wchar_t ucs) {
 	/* sorted list of non-overlapping intervals of non-spacing characters */
 	/* generated with "uniset +cat=Me +cat=Mn +cat=Cf +1160-11FF +200B c" */
 	static const struct interval combining[] = {
@@ -530,7 +502,7 @@ int mk_wcwidth(wchar_t ucs) {
 		return -1;
 
 	/* binary search in table of non-spacing characters */
-	if (bisearch(ucs, combining, sizeof(combining) / sizeof(struct interval) - 1))
+	if (nms_bisearch(ucs, combining, sizeof(combining) / sizeof(struct interval) - 1))
 		return 0;
 
 	/* if we arrive here, ucs is not a combining or C0/C1 control character */
@@ -547,4 +519,33 @@ int mk_wcwidth(wchar_t ucs) {
 		(ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
 		(ucs >= 0xffe0 && ucs <= 0xffe6) ||
 		(ucs >= 0x20000 && ucs <= 0x2ffff)));
+}
+
+/*
+ * static int nms_bisearch(wchar_t ucs, const struct interval *table, int max)
+ *
+ * DESCR:
+ * auxiliary function for binary search in interval table 
+ *
+ * Copied from: https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
+ */
+static int nms_bisearch(wchar_t ucs, const struct interval *table, int max) {
+	int min = 0;
+	int mid;
+
+	if (ucs < table[0].first || ucs > table[max].last)
+		return 0;
+
+	while (max >= min) {
+		mid = (min + max) / 2;
+
+		if (ucs > table[mid].last)
+			min = mid + 1;
+		else if (ucs < table[mid].first)
+			max = mid - 1;
+		else
+			return 1;
+	}
+
+	return 0;
 }
