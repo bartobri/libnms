@@ -19,9 +19,10 @@ CFLAGS ?= -Wextra -Wall -iquote$(SRC) -fpic
 
 .PHONY: all install uninstall clean
 
-EXES = libnms.so
+HEADERS = libnms.h
+LIBRARIES = libnms.so
 
-all: $(EXES)
+all: $(LIBRARIES)
 	
 libnms.so: $(OBJ)/libnms.o | $(LIB)
 	$(CC) -shared -o $(LIB)/$@ $^
@@ -41,7 +42,10 @@ clean:
 
 install:
 	install -d $(DESTDIR)$(libdir)
-	cd $(BIN) && install $(EXES) $(DESTDIR)$(libdir)
+	install -d $(DESTDIR)$(includedir)
+	cd $(LIB) && install $(LIBRARIES) $(DESTDIR)$(libdir)
+	cd $(SRC) && install $(HEADERS) $(DESTDIR)$(includedir)
 
 uninstall:
-	for exe in $(EXES); do rm $(DESTDIR)$(libdir)/$$exe; done
+	for library in $(LIBRARIES); do rm $(DESTDIR)$(libdir)/$$library; done
+	for header in $(HEADERS); do rm $(DESTDIR)$(includedir)/$$header; done
