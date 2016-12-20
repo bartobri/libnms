@@ -12,30 +12,31 @@ libdir = $(prefix)/lib
 BIN=bin
 OBJ=obj
 SRC=src
+LIB=lib
 
 CC ?= gcc
-CFLAGS ?= -Wextra -Wall -iquote$(SRC)
+CFLAGS ?= -Wextra -Wall -iquote$(SRC) -fpic
 
 .PHONY: all install uninstall clean
 
 EXES = libnms.so
 
 all: $(EXES)
-
-libnms.so: $(OBJ)/libnms.o | $(BIN)
-	$(CC) $(CFLAGS) -o $(BIN)/$@ $^
+	
+libnms.so: $(OBJ)/libnms.o | $(LIB)
+	$(CC) -shared -o $(LIB)/$@ $^
 
 $(OBJ)/%.o: $(SRC)/%.c | $(OBJ)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-$(BIN):
-	mkdir -p $(BIN)
+$(LIB):
+	mkdir -p $(LIB)
 
 $(OBJ):
 	mkdir -p $(OBJ)
 
 clean:
-	rm -rf $(BIN)
+	rm -rf $(LIB)
 	rm -rf $(OBJ)
 
 install:
