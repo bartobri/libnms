@@ -14,7 +14,6 @@ typedef struct {
 	char *return_opts;
 	int input_cursor_x;
 	int input_cursor_y;
-	bool show_cursor;
 	bool auto_decrypt;
 } NmsArgs;
 

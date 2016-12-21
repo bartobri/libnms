@@ -20,6 +20,8 @@
 #define JUMBLE_LOOP_SPEED    35    // miliseconds between each jumble
 #define REVEAL_LOOP_SPEED    100   // miliseconds (must be evenly divisible by 5)
 
+#define SHOW_CURSOR          1     // show cursor during the 'decryption'
+
 #define SPACE                32
 #define NEWLINE              10
 #define TAB                  9
@@ -106,7 +108,6 @@ static int nms_bisearch(wchar_t, const struct interval *, int);
  *      args.return_opts - Pointer to string containing character options for menu
  *      args.input_cursor_x - X screen coordinate to place cursor after "decryption"
  *      args.input_cursor_y - Y screen coordinate to place cursor after "decryption"
- *      args.show_cursor - 'true' to display cursor, 'false' to hide cursor.
  *
  */
 char nms_exec(NmsArgs *args) {
@@ -134,7 +135,7 @@ char nms_exec(NmsArgs *args) {
 	cbreak();
 	noecho();
 	scrollok(stdscr, true);
-	if (args->show_cursor == false)
+	if (SHOW_CURSOR == 0)
 		curs_set(0);
 
 	// Setting up and starting colors if terminal supports them
