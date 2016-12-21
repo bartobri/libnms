@@ -107,13 +107,9 @@ static int nms_bisearch(wchar_t, const struct interval *, int);
  * '\0' (null character) if there are any problems.
  *
  * ARGS:
- * NmsArgs *args - Pointer to argument structure
- *
- *      STRUCTURE MEMBERS:
- *      args.src - Pointer to string on which to perform the effect
- *
+ * char *string - character string
  */
-char nms_exec(NmsArgs *args) {
+char nms_exec(char *string) {
 	struct winpos *list_pointer = NULL;
 	struct winpos *start;                   // Always points to start of list
 	struct winpos *temp;                    // Used for free()ing the list
@@ -123,10 +119,10 @@ char nms_exec(NmsArgs *args) {
 	bool first = true;
 	char ret = 0;
 
-	// Lets check args.src and make sure we have text. If not, return
+	// Lets check the string and make sure we have text. If not, return
 	// with an error message.
-	if (args->src == NULL) {
-		fprintf(stderr, "Error. No data found in args.src\n");
+	if (*string == '\0') {
+		fprintf(stderr, "Error. Empty string.\n");
 		return 0;
 	}
 
@@ -155,7 +151,7 @@ char nms_exec(NmsArgs *args) {
 
 	// Geting input
 	n = 0;
-	while ((c = args->src[n++]) != '\0') {
+	while ((c = string[n++]) != '\0') {
 		if (c == NEWLINE) {
 			++y;
 			x = 0;
@@ -197,22 +193,22 @@ char nms_exec(NmsArgs *args) {
 				// 2 byte char
 				list_pointer->source = malloc(3);
 				list_pointer->source[0] = c;
-				list_pointer->source[1] = args->src[n++];
+				list_pointer->source[1] = string[n++];
 				list_pointer->source[2] = '\0';
 			} else if ((c & 0xF0) == 0xE0) {
 				// 3 byte char
 				list_pointer->source = malloc(4);
 				list_pointer->source[0] = c;
-				list_pointer->source[1] = args->src[n++];
-				list_pointer->source[2] = args->src[n++];
+				list_pointer->source[1] = string[n++];
+				list_pointer->source[2] = string[n++];
 				list_pointer->source[3] = '\0';
 			} else if ((c & 0xF8) == 0xF0) {
 				// 4 byte char
 				list_pointer->source = malloc(5);
 				list_pointer->source[0] = c;
-				list_pointer->source[1] = args->src[n++];
-				list_pointer->source[2] = args->src[n++];
-				list_pointer->source[3] = args->src[n++];
+				list_pointer->source[1] = string[n++];
+				list_pointer->source[2] = string[n++];
+				list_pointer->source[3] = string[n++];
 				list_pointer->source[4] = '\0';
 			} else {
 				// Unrecognized char, treat it as a single-byte char
