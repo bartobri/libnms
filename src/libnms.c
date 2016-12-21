@@ -68,6 +68,9 @@ static char *maskCharTable[] = {
 	"\xe2\x81\xbf", "\xe2\x96\xa0"
 };
 
+// Foreground color setting
+static int foregroundColor = COLOR_BLUE;
+
 // Window position structure, linked list. Keeps track of every
 // character's position on the terminal, as well as other attributes.
 struct winpos {
@@ -89,7 +92,6 @@ struct interval {
 
 
 // Function prototypes (internal)
-int nms_get_color_by_name(char *);
 int nms_mk_wcwidth(wchar_t);
 static int nms_bisearch(wchar_t, const struct interval *, int);
 
@@ -141,7 +143,7 @@ char nms_exec(NmsArgs *args) {
 	// Setting up and starting colors if terminal supports them
 	if (has_colors()) {
 		start_color();
-		init_pair(1, nms_get_color_by_name(args->foreground_color), COLOR_BLACK);
+		init_pair(1, foregroundColor, COLOR_BLACK);
 	}
 
 	// Get terminal window size
@@ -367,54 +369,6 @@ char nms_exec(NmsArgs *args) {
 	return ret;
 }
 
-/*
- * char nms_get_color_by_name(char *string, int fallback)
- *
- * ARGS:
- *
- * char *string - new color setting (white, yellow, black, magenta, blue, green, red)
- *
- * DESCR:
- * Returns an ncurses color by its name.
- *
- */
-int nms_get_color_by_name(char *string) {
-
-	if(string == NULL) {
-		return COLOR_BLUE;
-	}
-
-	if(strcmp("white", string) == 0) {
-		return COLOR_WHITE;
-	}
-
-	if(strcmp("yellow", string) == 0) {
-		return COLOR_YELLOW;
-	}
-
-	if(strcmp("black", string) == 0) {
-		return COLOR_BLACK;
-	}
-
-	if(strcmp("magenta", string) == 0) {
-		return COLOR_MAGENTA;
-	}
-
-	if(strcmp("blue", string) == 0) {
-		return COLOR_BLUE;
-	}
-
-	if(strcmp("green", string) == 0) {
-		return COLOR_GREEN;
-	}
-
-	if(strcmp("red", string) == 0) {
-		return COLOR_RED;
-	}
-
-	return COLOR_BLUE;
-}
-
 /* The following function defines the column width of an ISO 10646
  * character as follows:
  *
@@ -541,4 +495,24 @@ static int nms_bisearch(wchar_t ucs, const struct interval *table, int max) {
 	}
 
 	return 0;
+}
+
+void nms_set_foreground_color(char *color) {
+
+	if(strcmp("white", color) == 0)
+		foregroundColor =  COLOR_WHITE;
+	else if(strcmp("yellow", color) == 0)
+		foregroundColor = COLOR_YELLOW;
+	else if(strcmp("black", color) == 0)
+		foregroundColor = COLOR_BLACK;
+	else if(strcmp("magenta", color) == 0)
+		foregroundColor = COLOR_MAGENTA;
+	else if(strcmp("blue", color) == 0)
+		foregroundColor = COLOR_BLUE;
+	else if(strcmp("green", color) == 0)
+		foregroundColor = COLOR_GREEN;
+	else if(strcmp("red", color) == 0)
+		foregroundColor = COLOR_RED;
+	else
+		foregroundColor = COLOR_BLUE;
 }
