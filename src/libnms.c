@@ -72,6 +72,8 @@ static char *maskCharTable[] = {
 static int foregroundColor = COLOR_BLUE;   // Foreground color setting
 static char *returnOpts    = NULL;         // Return option setting
 static int autoDecrypt     = 0;            // Auto-decrypt flag
+static int inputPositionX  = -1;           // X coordinate for input position
+static int inputPositionY  = -1;           // Y coordinate for input position
 
 // Window position structure, linked list. Keeps track of every
 // character's position on the terminal, as well as other attributes.
@@ -109,8 +111,6 @@ static int nms_bisearch(wchar_t, const struct interval *, int);
  *
  *      STRUCTURE MEMBERS:
  *      args.src - Pointer to string on which to perform the effect
- *      args.input_cursor_x - X screen coordinate to place cursor after "decryption"
- *      args.input_cursor_y - Y screen coordinate to place cursor after "decryption"
  *
  */
 char nms_exec(NmsArgs *args) {
@@ -338,8 +338,8 @@ char nms_exec(NmsArgs *args) {
 	flushinp();
 
 	// Position cursor
-	if (args->input_cursor_y >= 0 && args->input_cursor_x >= 0) {
-		move(args->input_cursor_y, args->input_cursor_x);
+	if (inputPositionY >= 0 && inputPositionX >= 0) {
+		move(inputPositionY, inputPositionX);
 		curs_set(1);
 	}
 
@@ -528,4 +528,11 @@ void nms_set_auto_decrypt(int setting) {
 		autoDecrypt = 1;
 	else
 		autoDecrypt = 0;
+}
+
+void nms_set_input_position(int x, int y) {
+	if (x >= 0 && y >= 0) {
+		inputPositionX = x;
+		inputPositionY = y;
+	}
 }
