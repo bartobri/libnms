@@ -97,7 +97,6 @@ struct interval {
 
 // Function prototypes (internal)
 int nms_mk_wcwidth(wchar_t);
-static int nms_bisearch(wchar_t, const struct interval *, int);
 
 /*
  * void nms_exec(NmsArgs *)
@@ -394,8 +393,14 @@ char nms_exec(char *string) {
  *
  * This implementation assumes that wchar_t characters are encoded
  * in ISO 10646.
+ * 
+ * Thus function was copied (and adapted) from:
+ * https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
  */
 int nms_mk_wcwidth(wchar_t ucs) {
+	int min = 0;
+	int mid;
+	int max;
 	/* sorted list of non-overlapping intervals of non-spacing characters */
 	/* generated with "uniset +cat=Me +cat=Mn +cat=Cf +1160-11FF +200B c" */
 	static const struct interval combining[] = {
@@ -446,8 +451,19 @@ int nms_mk_wcwidth(wchar_t ucs) {
 		return -1;
 
 	/* binary search in table of non-spacing characters */
-	if (nms_bisearch(ucs, combining, sizeof(combining) / sizeof(struct interval) - 1))
-		return 0;
+	max = sizeof(combining) / sizeof(struct interval) - 1;
+	if (ucs >= combining[0].first || ucs <= combining[max].last) {
+		while (max >= min) {
+			mid = (min + max) / 2;
+	
+			if (ucs > combining[mid].last)
+				min = mid + 1;
+			else if (ucs < combining[mid].first)
+				max = mid - 1;
+			else
+				return 0;
+		}
+	}
 
 	/* if we arrive here, ucs is not a combining or C0/C1 control character */
 
@@ -463,35 +479,6 @@ int nms_mk_wcwidth(wchar_t ucs) {
 		(ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
 		(ucs >= 0xffe0 && ucs <= 0xffe6) ||
 		(ucs >= 0x20000 && ucs <= 0x2ffff)));
-}
-
-/*
- * static int nms_bisearch(wchar_t ucs, const struct interval *table, int max)
- *
- * DESCR:
- * auxiliary function for binary search in interval table 
- *
- * Copied from: https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
- */
-static int nms_bisearch(wchar_t ucs, const struct interval *table, int max) {
-	int min = 0;
-	int mid;
-
-	if (ucs < table[0].first || ucs > table[max].last)
-		return 0;
-
-	while (max >= min) {
-		mid = (min + max) / 2;
-
-		if (ucs > table[mid].last)
-			min = mid + 1;
-		else if (ucs < table[mid].first)
-			max = mid - 1;
-		else
-			return 1;
-	}
-
-	return 0;
 }
 
 void nms_set_foreground_color(char *color) {
