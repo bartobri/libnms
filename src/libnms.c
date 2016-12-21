@@ -70,7 +70,8 @@ static char *maskCharTable[] = {
 
 // Static variable settings
 static int foregroundColor = COLOR_BLUE;   // Foreground color setting
-static char *returnOpts = NULL;           // Return option setting
+static char *returnOpts    = NULL;         // Return option setting
+static int autoDecrypt     = 0;            // Auto-decrypt flag
 
 // Window position structure, linked list. Keeps track of every
 // character's position on the terminal, as well as other attributes.
@@ -252,9 +253,9 @@ char nms_exec(NmsArgs *args) {
 	// Flush any input up to this point
 	flushinp();
 
-	// If auto_decrypt flag is set, we sleep. Otherwise, reopen stdin for interactive
+	// If autoDecrypt flag is set, we sleep. Otherwise, reopen stdin for interactive
 	// input (keyboard), then require user to press a key to continue.
-	if (args->auto_decrypt == true || (!isatty(STDIN_FILENO) && !freopen ("/dev/tty", "r", stdin)))
+	if (autoDecrypt || (!isatty(STDIN_FILENO) && !freopen ("/dev/tty", "r", stdin)))
 		sleep(1);
 	else
 		getch();
@@ -520,4 +521,11 @@ void nms_set_foreground_color(char *color) {
 void nms_set_return_opts(char *opts) {
 	returnOpts = realloc(returnOpts, strlen(opts) + 1);
 	strcpy(returnOpts, opts);
+}
+
+void nms_set_auto_decrypt(int setting) {
+	if (setting)
+		autoDecrypt = 1;
+	else
+		autoDecrypt = 0;
 }
