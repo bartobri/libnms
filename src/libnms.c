@@ -68,8 +68,9 @@ static char *maskCharTable[] = {
 	"\xe2\x81\xbf", "\xe2\x96\xa0"
 };
 
-// Foreground color setting
-static int foregroundColor = COLOR_BLUE;
+// Static variable settings
+static int foregroundColor = COLOR_BLUE;   // Foreground color setting
+static char *returnOpts = NULL;           // Return option setting
 
 // Window position structure, linked list. Keeps track of every
 // character's position on the terminal, as well as other attributes.
@@ -107,7 +108,6 @@ static int nms_bisearch(wchar_t, const struct interval *, int);
  *
  *      STRUCTURE MEMBERS:
  *      args.src - Pointer to string on which to perform the effect
- *      args.return_opts - Pointer to string containing character options for menu
  *      args.input_cursor_x - X screen coordinate to place cursor after "decryption"
  *      args.input_cursor_y - Y screen coordinate to place cursor after "decryption"
  *
@@ -345,8 +345,8 @@ char nms_exec(NmsArgs *args) {
 	// If stdin is set to the keyboard, user must press a key to continue
 	if (isatty(STDIN_FILENO)) {
 		ret = getch();
-		if (args->return_opts != NULL && strlen(args->return_opts) > 0)
-			while (index(args->return_opts, ret) == NULL) {
+		if (returnOpts != NULL && strlen(returnOpts) > 0)
+			while (index(returnOpts, ret) == NULL) {
 				beep();
 				ret = getch();
 			}
@@ -515,4 +515,9 @@ void nms_set_foreground_color(char *color) {
 		foregroundColor = COLOR_RED;
 	else
 		foregroundColor = COLOR_BLUE;
+}
+
+void nms_set_return_opts(char *opts) {
+	returnOpts = realloc(returnOpts, strlen(opts) + 1);
+	strcpy(returnOpts, opts);
 }
