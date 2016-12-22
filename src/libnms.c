@@ -106,7 +106,7 @@ char nms_exec(char *string) {
 	struct winpos *start;                   // Always points to start of list
 	struct winpos *temp;                    // Used for free()ing the list
 	int termSizeRows, termSizeCols;
-	int c, n, x = 0, y = 0;
+	int i, x = 0, y = 0;
 	int r_time, r_time_l, r_time_s;
 	bool first = true;
 	char ret = 0;
@@ -142,19 +142,18 @@ char nms_exec(char *string) {
 	srand(time(NULL));
 
 	// Geting input
-	n = 0;
-	while ((c = string[n++]) != '\0') {
-		if (c == NEWLINE) {
+	for (i = 0; string[i] != '\0'; ++i) {
+		if (string[i] == NEWLINE) {
 			++y;
 			x = 0;
-		} else if (c == TAB) {
+		} else if (string[i] == TAB) {
 			if (x + TAB_SIZE < termSizeCols)
 				x += TAB_SIZE;
 			else {
 				++y;
 				x = 0;
 			}
-		} else if (isspace(c)) {
+		} else if (isspace(string[i])) {
 			if (++x >= termSizeCols) {
 				++y;
 				x = 0;
@@ -176,36 +175,36 @@ char nms_exec(char *string) {
 			r_time_s *= 100;
 			r_time_l *= 100;
 
-			if ((c & 0x80) == 0x00) {
+			if ((string[i] & 0x80) == 0x00) {
 				// ascii char
 				list_pointer->source = malloc(2);
-				list_pointer->source[0] = c;
+				list_pointer->source[0] = string[i];
 				list_pointer->source[1] = '\0';
-			} else if ((c & 0xE0) == 0xC0) {
+			} else if ((string[i] & 0xE0) == 0xC0) {
 				// 2 byte char
 				list_pointer->source = malloc(3);
-				list_pointer->source[0] = c;
-				list_pointer->source[1] = string[n++];
+				list_pointer->source[0] = string[i];
+				list_pointer->source[1] = string[++i];
 				list_pointer->source[2] = '\0';
-			} else if ((c & 0xF0) == 0xE0) {
+			} else if ((string[i] & 0xF0) == 0xE0) {
 				// 3 byte char
 				list_pointer->source = malloc(4);
-				list_pointer->source[0] = c;
-				list_pointer->source[1] = string[n++];
-				list_pointer->source[2] = string[n++];
+				list_pointer->source[0] = string[i];
+				list_pointer->source[1] = string[++i];
+				list_pointer->source[2] = string[++i];
 				list_pointer->source[3] = '\0';
-			} else if ((c & 0xF8) == 0xF0) {
+			} else if ((string[i] & 0xF8) == 0xF0) {
 				// 4 byte char
 				list_pointer->source = malloc(5);
-				list_pointer->source[0] = c;
-				list_pointer->source[1] = string[n++];
-				list_pointer->source[2] = string[n++];
-				list_pointer->source[3] = string[n++];
+				list_pointer->source[0] = string[i];
+				list_pointer->source[1] = string[++i];
+				list_pointer->source[2] = string[++i];
+				list_pointer->source[3] = string[++i];
 				list_pointer->source[4] = '\0';
 			} else {
 				// Unrecognized char, treat it as a single-byte char
 				list_pointer->source = malloc(2);
-				list_pointer->source[0] = c;
+				list_pointer->source[0] = string[i];
 				list_pointer->source[1] = '\0';
 			}
 
