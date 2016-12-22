@@ -87,13 +87,6 @@ struct winpos {
 	struct winpos *next;
 };
 
-// Interval structure needed for the mk_wcwidth() function which is
-// used to determine character width
-struct interval {
-	int first;
-	int last;
-};
-
 
 // Function prototypes (internal)
 int nms_mk_wcwidth(wchar_t);
@@ -401,9 +394,16 @@ int nms_mk_wcwidth(wchar_t ucs) {
 	int min = 0;
 	int mid;
 	int max;
-	/* sorted list of non-overlapping intervals of non-spacing characters */
-	/* generated with "uniset +cat=Me +cat=Mn +cat=Cf +1160-11FF +200B c" */
-	static const struct interval combining[] = {
+	
+	// Interval structure
+	struct interval {
+		int first;
+		int last;
+	};
+	
+	// sorted list of non-overlapping intervals of non-spacing characters
+	// generated with "uniset +cat=Me +cat=Mn +cat=Cf +1160-11FF +200B c"
+	struct interval combining[] = {
 		{ 0x0300, 0x034F }, { 0x0360, 0x036F }, { 0x0483, 0x0486 },
 		{ 0x0488, 0x0489 }, { 0x0591, 0x05A1 }, { 0x05A3, 0x05B9 },
 		{ 0x05BB, 0x05BD }, { 0x05BF, 0x05BF }, { 0x05C1, 0x05C2 },
@@ -444,13 +444,13 @@ int nms_mk_wcwidth(wchar_t ucs) {
 		{ 0xE0020, 0xE007F }
 	};
 
-	/* test for 8-bit control characters */
+	// test for 8-bit control characters
 	if (ucs == 0)
 		return 0;
 	if (ucs < 32 || (ucs >= 0x7f && ucs < 0xa0))
 		return -1;
 
-	/* binary search in table of non-spacing characters */
+	// binary search in table of non-spacing characters
 	max = sizeof(combining) / sizeof(struct interval) - 1;
 	if (ucs >= combining[0].first && ucs <= combining[max].last) {
 		while (max >= min) {
@@ -465,20 +465,20 @@ int nms_mk_wcwidth(wchar_t ucs) {
 		}
 	}
 
-	/* if we arrive here, ucs is not a combining or C0/C1 control character */
+	// if we arrive here, ucs is not a combining or C0/C1 control character
 
 	return 1 + 
 		(ucs >= 0x1100 &&
-		(ucs <= 0x115f ||                    /* Hangul Jamo init. consonants */
-		ucs == 0x2329 || ucs == 0x232a ||
-		(ucs >= 0x2e80 && ucs <= 0xa4cf &&
-		ucs != 0x303f) ||                  /* CJK ... Yi */
-		(ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
-		(ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
-		(ucs >= 0xfe30 && ucs <= 0xfe6f) || /* CJK Compatibility Forms */
-		(ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
-		(ucs >= 0xffe0 && ucs <= 0xffe6) ||
-		(ucs >= 0x20000 && ucs <= 0x2ffff)));
+			(ucs <= 0x115f || ucs == 0x2329 || ucs == 0x232a ||   /* Hangul Jamo init. consonants */
+				(ucs >= 0x2e80 && ucs <= 0xa4cf && ucs != 0x303f) ||   /* CJK ... Yi */
+				(ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
+				(ucs >= 0xf900 && ucs <= 0xfaff) || /* CJK Compatibility Ideographs */
+				(ucs >= 0xfe30 && ucs <= 0xfe6f) || /* CJK Compatibility Forms */
+				(ucs >= 0xff00 && ucs <= 0xff60) || /* Fullwidth Forms */
+				(ucs >= 0xffe0 && ucs <= 0xffe6) ||
+				(ucs >= 0x20000 && ucs <= 0x2ffff)
+			)
+		);
 }
 
 void nms_set_foreground_color(char *color) {
