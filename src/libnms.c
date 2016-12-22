@@ -452,7 +452,7 @@ int nms_mk_wcwidth(wchar_t ucs) {
 
 	/* binary search in table of non-spacing characters */
 	max = sizeof(combining) / sizeof(struct interval) - 1;
-	if (ucs >= combining[0].first || ucs <= combining[max].last) {
+	if (ucs >= combining[0].first && ucs <= combining[max].last) {
 		while (max >= min) {
 			mid = (min + max) / 2;
 	
