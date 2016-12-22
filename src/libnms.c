@@ -175,37 +175,14 @@ char nms_exec(char *string) {
 			r_time_s *= 100;
 			r_time_l *= 100;
 
-			if ((string[i] & 0x80) == 0x00) {
-				// ascii char
-				list_pointer->source = malloc(2);
-				list_pointer->source[0] = string[i];
-				list_pointer->source[1] = '\0';
-			} else if ((string[i] & 0xE0) == 0xC0) {
-				// 2 byte char
-				list_pointer->source = malloc(3);
-				list_pointer->source[0] = string[i];
-				list_pointer->source[1] = string[++i];
-				list_pointer->source[2] = '\0';
-			} else if ((string[i] & 0xF0) == 0xE0) {
-				// 3 byte char
-				list_pointer->source = malloc(4);
-				list_pointer->source[0] = string[i];
-				list_pointer->source[1] = string[++i];
-				list_pointer->source[2] = string[++i];
-				list_pointer->source[3] = '\0';
-			} else if ((string[i] & 0xF8) == 0xF0) {
-				// 4 byte char
-				list_pointer->source = malloc(5);
-				list_pointer->source[0] = string[i];
-				list_pointer->source[1] = string[++i];
-				list_pointer->source[2] = string[++i];
-				list_pointer->source[3] = string[++i];
-				list_pointer->source[4] = '\0';
+			if (mblen(&string[i], 4) > 0) {
+				list_pointer->source = malloc(mblen(&string[i], 4) + 1);
+				strncpy(list_pointer->source, &string[i], mblen(&string[i], 4));
+				list_pointer->source[mblen(&string[i], 4)] = '\0';
+				i += (mblen(&string[i], 4) - 1);
 			} else {
-				// Unrecognized char, treat it as a single-byte char
-				list_pointer->source = malloc(2);
-				list_pointer->source[0] = string[i];
-				list_pointer->source[1] = '\0';
+				fprintf(stderr, "Unknown character encountered. Quitting.\n");
+				return '\0';
 			}
 
 			list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
