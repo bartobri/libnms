@@ -12,7 +12,11 @@
 #include <stdbool.h>
 #include <time.h>
 #include <locale.h>
+
+#define __USE_XOPEN
 #include <wchar.h>
+
+#define NCURSES_WIDECHAR 1
 #include <ncurses.h>
 
 #define TYPE_EFFECT_SPEED    4     // miliseconds per char
@@ -31,6 +35,7 @@
 
 // Character table representing the character set know as CP437 used by
 // the original IBM PC - https://en.wikipedia.org/wiki/Code_page_437
+//static char *maskCharTable[] = {
 static char *maskCharTable[] = {
 	"!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", "~",
 	".", "/", ":", ";", "<", "=", ">", "?", "[", "\\", "]", "_", "{", "}",
@@ -80,8 +85,8 @@ static int inputPositionY  = -1;           // Y coordinate for input position
 struct winpos {
 	char *source;
 	char *mask;
-	int row;
-	int col;
+	int width;
+	int is_space;
 	int s1_time;
 	int s2_time;
 	struct winpos *next;
@@ -105,10 +110,8 @@ char nms_exec(char *string) {
 	struct winpos *list_pointer = NULL;
 	struct winpos *start;                   // Always points to start of list
 	struct winpos *temp;                    // Used for free()ing the list
-	int termSizeRows, termSizeCols;
-	int i, x = 0, y = 0;
+	int i;
 	int r_time, r_time_l, r_time_s;
-	bool first = true;
 	char ret = 0;
 
 	// Lets check the string and make sure we have text. If not, return
@@ -135,82 +138,76 @@ char nms_exec(char *string) {
 		init_pair(1, foregroundColor, COLOR_BLACK);
 	}
 
-	// Get terminal window size
-	getmaxyx(stdscr, termSizeRows, termSizeCols);
-
 	// Seed my random number generator with the current time
 	srand(time(NULL));
 
 	// Geting input
 	for (i = 0; string[i] != '\0'; ++i) {
-		if (string[i] == NEWLINE) {
-			++y;
-			x = 0;
-		} else if (string[i] == TAB) {
-			if (x + TAB_SIZE < termSizeCols)
-				x += TAB_SIZE;
-			else {
-				++y;
-				x = 0;
-			}
-		} else if (isspace(string[i])) {
-			if (++x >= termSizeCols) {
-				++y;
-				x = 0;
-			}
+	
+		if (list_pointer == NULL) {
+			list_pointer = malloc(sizeof(struct winpos));
+			start = list_pointer;
 		} else {
-			if (first) {
-				list_pointer = malloc(sizeof(struct winpos));
-				start = list_pointer;
-				first = false;
-			} else {
-				list_pointer->next = malloc(sizeof(struct winpos));
-				list_pointer = list_pointer->next;
-			}
-
-			r_time = rand() % 50;
-			r_time_s = r_time * .25;
-			r_time_l = r_time * .75;
-			r_time *= 100;
-			r_time_s *= 100;
-			r_time_l *= 100;
-
-			if (mblen(&string[i], 4) > 0) {
-				list_pointer->source = malloc(mblen(&string[i], 4) + 1);
-				strncpy(list_pointer->source, &string[i], mblen(&string[i], 4));
-				list_pointer->source[mblen(&string[i], 4)] = '\0';
-				i += (mblen(&string[i], 4) - 1);
-			} else {
-				fprintf(stderr, "Unknown character encountered. Quitting.\n");
-				return '\0';
-			}
-
-			list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
-			list_pointer->row = y;
-			list_pointer->col = x;
-			list_pointer->s1_time = r_time > 1000 ? r_time_l : r_time;
-			list_pointer->s2_time = r_time > 1000 ? r_time_s : 0;
-			list_pointer->next = NULL;
-
-			wchar_t widec[sizeof(list_pointer->source)] = {};
-			mbstowcs(widec, list_pointer->source, sizeof(list_pointer->source));
-			if (nms_mk_wcwidth(*widec) == 2)
-				++x;
-
-			if (++x >= termSizeCols) {
-				++y;
-				x = 0;
-			}
+			list_pointer->next = malloc(sizeof(struct winpos));
+			list_pointer = list_pointer->next;
 		}
+
+		r_time = rand() % 50;
+		r_time_s = r_time * .25;
+		r_time_l = r_time * .75;
+		r_time *= 100;
+		r_time_s *= 100;
+		r_time_l *= 100;
+
+		if (mblen(&string[i], 4) > 0) {
+			list_pointer->source = malloc(mblen(&string[i], 4) + 1);
+			strncpy(list_pointer->source, &string[i], mblen(&string[i], 4));
+			list_pointer->source[mblen(&string[i], 4)] = '\0';
+			i += (mblen(&string[i], 4) - 1);
+		} else {
+			endwin();
+			fprintf(stderr, "Unknown character encountered. Quitting.\n");
+			return '\0';
+		}
+
+		if (strlen(list_pointer->source) == 1 && isspace(list_pointer->source[0]))
+			list_pointer->is_space = 1;
+		else
+			list_pointer->is_space = 0;
+		
+		list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
+
+		r_time = rand() % 50;
+		r_time_s = r_time * .25;
+		r_time_l = r_time * .75;
+		r_time *= 100;
+		r_time_s *= 100;
+		r_time_l *= 100;
+		
+		list_pointer->s1_time = r_time > 1000 ? r_time_l : r_time;
+		list_pointer->s2_time = r_time > 1000 ? r_time_s : 0;
+		list_pointer->next = NULL;
+
+		//wchar_t widec[sizeof(list_pointer->source)] = {};
+		//mbstowcs(widec, list_pointer->source, sizeof(list_pointer->source));
+		//list_pointer->width = wcwidth(widec);
+		list_pointer->width = 1; // stubbed for now
 	}
+	
+	// Position cursor to top-left
+	move(0,0);
 
 	// Initially display the characters in the terminal with a 'type effect'.
-	list_pointer = start;
-	while (list_pointer != NULL && list_pointer->row <= termSizeRows) {
-		mvaddstr(list_pointer->row, list_pointer->col, list_pointer->mask);
+	for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
+		if (list_pointer->is_space) {
+			addstr(list_pointer->source);
+		} else {
+			addstr(list_pointer->mask);
+			if (list_pointer->width == 2) {
+				addstr(" ");
+			}
+		}
 		refresh();
-		list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
-		list_pointer = list_pointer->next;
 		usleep(TYPE_EFFECT_SPEED * 1000);
 	}
 
@@ -225,47 +222,54 @@ char nms_exec(char *string) {
 		getch();
 
 	// Jumble loop
-	x = 0;
-	while (x < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED) {
-		list_pointer = start;
-		while (list_pointer != NULL && list_pointer->row <= termSizeRows) {
-			mvaddstr(list_pointer->row, list_pointer->col, list_pointer->mask);
-			list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
-			list_pointer = list_pointer->next;
+	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
+		
+		// Position cursor to top-left
+		move(0,0);
+
+		for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
+			if (list_pointer->is_space) {
+				addstr(list_pointer->source);
+			} else {
+				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
+			}
 		}
 		refresh();
 		usleep(JUMBLE_LOOP_SPEED * 1000);
-		++x;
 	}
-
 
 	// Reveal loop
 	int s1_remask_time = 500;     // time, in milliseconds, we change the mask for stage 1
 	bool loop = true;
 	while (loop) {
+		move(0,0);
 		loop = false;
-		list_pointer = start;
-		while (list_pointer != NULL && list_pointer->row <= termSizeRows) {
+		for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
+			
+			if (list_pointer->is_space) {
+				addstr(list_pointer->source);
+				continue;
+			}
+			
 			if (list_pointer->s1_time > 0) {
 				loop = true;
 				list_pointer->s1_time -= REVEAL_LOOP_SPEED;
 				if (list_pointer->s1_time % s1_remask_time == 0) {
 					list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
 				}
+				addstr(list_pointer->mask);
 			} else if (list_pointer->s2_time > 0) {
 				loop = true;
 				list_pointer->s2_time -= REVEAL_LOOP_SPEED;
-				list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
+				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
 			} else {
-				list_pointer->mask = list_pointer->source;
 				attron(A_BOLD);
 				if (has_colors())
 					attron(COLOR_PAIR(1));
+				addstr(list_pointer->source);
 			}
-			mvaddstr(list_pointer->row, list_pointer->col, list_pointer->mask);
+			
 			refresh();
-
-			list_pointer = list_pointer->next;
 
 			attroff(A_BOLD);
 			if (has_colors())
@@ -274,6 +278,7 @@ char nms_exec(char *string) {
 		usleep(REVEAL_LOOP_SPEED * 1000);
 	}
 
+	/*
 	// Printing remaining characters from list if we stopped short due to 
 	// a terminal row limitation. i.e. the number of textual rows in the input
 	// stream were greater than the number of rows in the terminal.
@@ -297,6 +302,7 @@ char nms_exec(char *string) {
 		if (has_colors())
 			attroff(COLOR_PAIR(1));
 	}
+	*/
 
 	// Flush any input up to this point
 	flushinp();
