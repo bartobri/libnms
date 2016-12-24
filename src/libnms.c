@@ -26,11 +26,6 @@
 
 #define SHOW_CURSOR          1     // show cursor during the 'decryption'
 
-#define SPACE                32
-#define NEWLINE              10
-#define TAB                  9
-#define TAB_SIZE             4
-
 #define MASK_CHAR_COUNT      218   // Total characters in maskCharTable[] array.
 
 // Character table representing the character set know as CP437 used by
