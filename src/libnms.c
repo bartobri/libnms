@@ -210,10 +210,8 @@ char nms_exec(char *string) {
 	}
 
 	// Reveal loop
-	int loop = 1;
-	while (loop) {
-		loop = nms_print_list(maxRows, 0, 0, 1);
-	}
+	while (nms_print_list(maxRows, 0, 0, 1))
+		;
 
 	// Flush any input up to this point
 	flushinp();
