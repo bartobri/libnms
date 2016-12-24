@@ -203,7 +203,7 @@ char nms_exec(char *string) {
 		} else {
 			addstr(list_pointer->mask);
 			if (list_pointer->width == 2) {
-				addstr(" ");
+				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
 			}
 		}
 		refresh();
@@ -232,7 +232,7 @@ char nms_exec(char *string) {
 			} else {
 				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
 				if (list_pointer->width == 2) {
-					addstr(" ");
+					addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
 				}
 			}
 		}
@@ -261,14 +261,14 @@ char nms_exec(char *string) {
 				}
 				addstr(list_pointer->mask);
 				if (list_pointer->width == 2) {
-					addstr(" ");
+					addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
 				}
 			} else if (list_pointer->s2_time > 0) {
 				loop = true;
 				list_pointer->s2_time -= REVEAL_LOOP_SPEED;
 				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
 				if (list_pointer->width == 2) {
-					addstr(" ");
+					addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
 				}
 			} else {
 				attron(A_BOLD);
