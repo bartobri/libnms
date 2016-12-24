@@ -115,7 +115,7 @@ char nms_exec(char *string) {
 
 	// Lets check the string and make sure we have text. If not, return
 	// with an error message.
-	if (*string == '\0') {
+	if (string == NULL || string[0] == '\0') {
 		fprintf(stderr, "Error. Empty string.\n");
 		return 0;
 	}
