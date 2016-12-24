@@ -188,10 +188,9 @@ char nms_exec(char *string) {
 		list_pointer->s2_time = r_time > 1000 ? r_time_s : 0;
 		list_pointer->next = NULL;
 
-		//wchar_t widec[sizeof(list_pointer->source)] = {};
-		//mbstowcs(widec, list_pointer->source, sizeof(list_pointer->source));
-		//list_pointer->width = wcwidth(widec);
-		list_pointer->width = 1; // stubbed for now
+		wchar_t widec[sizeof(list_pointer->source)] = {};
+		mbstowcs(widec, list_pointer->source, sizeof(list_pointer->source));
+		list_pointer->width = wcwidth(*widec);
 	}
 	
 	// Position cursor to top-left
@@ -232,6 +231,9 @@ char nms_exec(char *string) {
 				addstr(list_pointer->source);
 			} else {
 				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
+				if (list_pointer->width == 2) {
+					addstr(" ");
+				}
 			}
 		}
 		refresh();
@@ -258,10 +260,16 @@ char nms_exec(char *string) {
 					list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
 				}
 				addstr(list_pointer->mask);
+				if (list_pointer->width == 2) {
+					addstr(" ");
+				}
 			} else if (list_pointer->s2_time > 0) {
 				loop = true;
 				list_pointer->s2_time -= REVEAL_LOOP_SPEED;
 				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
+				if (list_pointer->width == 2) {
+					addstr(" ");
+				}
 			} else {
 				attron(A_BOLD);
 				if (has_colors())
