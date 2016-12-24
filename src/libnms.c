@@ -42,13 +42,7 @@ struct winpos {
 
 // Function prototypes
 void nms_sleep(int);
-int  nms_print_list(int, void (*)(void), int (*)(void));
-void nms_type_effect(void);
-int  nms_jumble_loop(void);
-void nms_reveal_loop_inner(void);
-int  nms_reveal_loop_outer(void);
-void nms_nothing_inner(void);
-int  nms_nothing_outer(void);
+int  nms_print_list(int, int, int, int);
 
 // Character table representing the character set know as CP437 used by
 // the original IBM PC - https://en.wikipedia.org/wiki/Code_page_437
@@ -198,7 +192,7 @@ char nms_exec(char *string) {
 		list_pointer->width = wcwidth(*widec);
 	}
 	
-	nms_print_list(maxRows, &nms_type_effect, &nms_nothing_outer);
+	nms_print_list(maxRows, 1, 0, 0);
 
 	// Flush any input up to this point
 	flushinp();
@@ -212,13 +206,13 @@ char nms_exec(char *string) {
 
 	// Jumble loop
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
-		nms_print_list(maxRows, &nms_nothing_inner, &nms_jumble_loop);
+		nms_print_list(maxRows, 0, 1, 0);
 	}
 
 	// Reveal loop
 	int loop = 1;
 	while (loop) {
-		loop = nms_print_list(maxRows, &nms_reveal_loop_inner, &nms_reveal_loop_outer);
+		loop = nms_print_list(maxRows, 0, 0, 1);
 	}
 
 	// Flush any input up to this point
@@ -257,8 +251,8 @@ char nms_exec(char *string) {
 	return ret;
 }
 
-int nms_print_list(int maxRows, void (*inside)(void), int (*outside)(void)) {
-	int r;
+int nms_print_list(int maxRows, int type, int jumble, int reveal) {
+	int r = 0;
 	struct winpos *list_pointer;
 	
 	// Position cursor to top-left
@@ -275,76 +269,54 @@ int nms_print_list(int maxRows, void (*inside)(void), int (*outside)(void)) {
 		// Print mask character (or space)
 		if (list_pointer->is_space) {
 			addstr(list_pointer->source);
-		} else {
-			if (list_pointer->s1_time <= 0 && list_pointer->s2_time <= 0) {
-				attron(A_BOLD);
-				if (has_colors())
-					attron(COLOR_PAIR(1));
-				addstr(list_pointer->source);
-				attroff(A_BOLD);
-				if (has_colors())
-					attroff(COLOR_PAIR(1));
-			} else {
-				addstr(list_pointer->mask);
-				if (list_pointer->width == 2) {
-					addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
-				}
-			}
+			continue;
 		}
 
-		// Executing inside function
-		inside();
-	}
-
-	// Executing outside function
-	r = outside();
-	
-	return r;
-}
-
-void nms_type_effect(void) {
-	// Refresh window and sleep
-	refresh();
-	nms_sleep(TYPE_EFFECT_SPEED);
-}
-
-int nms_jumble_loop(void) {
-	struct winpos *list_pointer;
-	
-	// remask all chars
-	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
-		list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
-	}
-
-	// Refresh window and sleep
-	refresh();
-	nms_sleep(JUMBLE_LOOP_SPEED);
-	
-	return 0;
-}
-
-void nms_reveal_loop_inner(void) {
-	refresh();
-}
-
-int nms_reveal_loop_outer(void) {
-	int r = 0;
-	struct winpos *list_pointer;
-	
-	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
-		if (list_pointer->s1_time > 0) {
+		if (reveal && list_pointer->s1_time > 0) {
 			list_pointer->s1_time -= REVEAL_LOOP_SPEED;
 			if (list_pointer->s1_time % 500 == 0) {
 				list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
 			}
+			addstr(list_pointer->mask);
 			r = 1;
-		} else if (list_pointer->s2_time > 0) {
+		} else if (reveal && list_pointer->s2_time > 0) {
 			list_pointer->s2_time -= REVEAL_LOOP_SPEED;
 			list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
+			addstr(list_pointer->mask);
 			r = 1;
+		} else if (reveal) {
+			attron(A_BOLD);
+			if (has_colors())
+				attron(COLOR_PAIR(1));
+			addstr(list_pointer->source);
+			attroff(A_BOLD);
+			if (has_colors())
+				attroff(COLOR_PAIR(1));
+		} else {
+			addstr(list_pointer->mask);
+			if (list_pointer->width == 2) {
+				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
+			}
+		}
+
+		if (type) {
+			refresh();
+			nms_sleep(TYPE_EFFECT_SPEED);
+		} else if (jumble) {
+			list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
+		} else if (reveal) {
+			refresh();
 		}
 	}
-	nms_sleep(REVEAL_LOOP_SPEED);
+
+	if (jumble) {
+		refresh();
+		nms_sleep(JUMBLE_LOOP_SPEED);
+	}
+	
+	if (reveal) {
+		nms_sleep(REVEAL_LOOP_SPEED);
+	}
 	
 	return r;
 }
@@ -356,14 +328,6 @@ void nms_sleep(int t) {
 	ts.tv_nsec = (t % 1000) * 1000000;
 	
 	nanosleep(&ts, NULL);
-}
-
-void nms_nothing_inner(void) {
-	return;
-}
-
-int nms_nothing_outer(void) {
-	return 0;
 }
 
 void nms_set_foreground_color(char *color) {
