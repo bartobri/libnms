@@ -28,6 +28,28 @@
 
 #define MASK_CHAR_COUNT      218   // Total characters in maskCharTable[] array.
 
+// Window position structure, linked list. Keeps track of every
+// character's position on the terminal, as well as other attributes.
+struct winpos {
+	char *source;
+	char *mask;
+	int width;
+	int is_space;
+	int s1_time;
+	int s2_time;
+	struct winpos *next;
+};
+
+// Function prototypes
+void nms_sleep(int);
+int  nms_print_list(int, void (*)(void), int (*)(void));
+void nms_type_effect(void);
+int  nms_jumble_loop(void);
+void nms_reveal_loop_inner(void);
+int  nms_reveal_loop_outer(void);
+void nms_nothing_inner(void);
+int  nms_nothing_outer(void);
+
 // Character table representing the character set know as CP437 used by
 // the original IBM PC - https://en.wikipedia.org/wiki/Code_page_437
 static char *maskCharTable[] = {
@@ -68,26 +90,12 @@ static char *maskCharTable[] = {
 };
 
 // Static variable settings
-static int foregroundColor = COLOR_BLUE;   // Foreground color setting
-static char *returnOpts    = NULL;         // Return option setting
-static int autoDecrypt     = 0;            // Auto-decrypt flag
-static int inputPositionX  = -1;           // X coordinate for input position
-static int inputPositionY  = -1;           // Y coordinate for input position
-
-// Window position structure, linked list. Keeps track of every
-// character's position on the terminal, as well as other attributes.
-struct winpos {
-	char *source;
-	char *mask;
-	int width;
-	int is_space;
-	int s1_time;
-	int s2_time;
-	struct winpos *next;
-};
-
-// Function prototypes
-void nms_sleep(int);
+static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
+static char *returnOpts     = NULL;         // Return option setting
+static int autoDecrypt      = 0;            // Auto-decrypt flag
+static int inputPositionX   = -1;           // X coordinate for input position
+static int inputPositionY   = -1;           // Y coordinate for input position
+static struct winpos *list_head    = NULL;
 
 /*
  * void nms_exec(NmsArgs *)
@@ -101,8 +109,7 @@ void nms_sleep(int);
  */
 char nms_exec(char *string) {
 	struct winpos *list_pointer = NULL;
-	struct winpos *start;
-	struct winpos *temp;
+	struct winpos *list_temp    = NULL;
 	int i;
 	int r_time, r_time_l, r_time_s;
 	int maxRows;
@@ -144,7 +151,7 @@ char nms_exec(char *string) {
 		// Allocate memory for next list link
 		if (list_pointer == NULL) {
 			list_pointer = malloc(sizeof(struct winpos));
-			start = list_pointer;
+			list_head = list_pointer;
 		} else {
 			list_pointer->next = malloc(sizeof(struct winpos));
 			list_pointer = list_pointer->next;
@@ -173,6 +180,8 @@ char nms_exec(char *string) {
 
 		// Set reveal times
 		r_time = rand() % 50;
+		if (r_time == 0)
+			r_time++;
 		r_time_s = r_time * .25;
 		r_time_l = r_time * .75;
 		r_time *= 100;
@@ -189,28 +198,7 @@ char nms_exec(char *string) {
 		list_pointer->width = wcwidth(*widec);
 	}
 	
-	// Position cursor to top-left
-	move(0,0);
-
-	// Initially display the characters in the terminal with a 'type effect'.
-	for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
-		
-		// break out of loop if we reach the bottom of the terminal
-		if (getcury(stdscr) == maxRows - 1) {
-			break;
-		}
-		
-		if (list_pointer->is_space) {
-			addstr(list_pointer->source);
-		} else {
-			addstr(list_pointer->mask);
-			if (list_pointer->width == 2) {
-				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
-			}
-		}
-		refresh();
-		nms_sleep(TYPE_EFFECT_SPEED);
-	}
+	nms_print_list(maxRows, &nms_type_effect, &nms_nothing_outer);
 
 	// Flush any input up to this point
 	flushinp();
@@ -224,76 +212,13 @@ char nms_exec(char *string) {
 
 	// Jumble loop
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
-		move(0,0);
-		for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
-			
-			// break out of loop if we reach the bottom of the terminal
-			if (getcury(stdscr) == maxRows - 1) {
-				break;
-			}
-		
-			if (list_pointer->is_space) {
-				addstr(list_pointer->source);
-			} else {
-				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
-				if (list_pointer->width == 2) {
-					addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
-				}
-			}
-		}
-		refresh();
-		nms_sleep(JUMBLE_LOOP_SPEED);
+		nms_print_list(maxRows, &nms_nothing_inner, &nms_jumble_loop);
 	}
 
 	// Reveal loop
-	int s1_remask_time = 500;     // time, in milliseconds, we change the mask for stage 1
-	bool loop = true;
+	int loop = 1;
 	while (loop) {
-		move(0,0);
-		loop = false;
-		for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
-			
-			// break out of loop if we reach the bottom of the terminal
-			if (getcury(stdscr) == maxRows - 1) {
-				break;
-			}
-			
-			if (list_pointer->is_space) {
-				addstr(list_pointer->source);
-				continue;
-			}
-			
-			if (list_pointer->s1_time > 0) {
-				loop = true;
-				list_pointer->s1_time -= REVEAL_LOOP_SPEED;
-				if (list_pointer->s1_time % s1_remask_time == 0) {
-					list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
-				}
-				addstr(list_pointer->mask);
-				if (list_pointer->width == 2) {
-					addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
-				}
-			} else if (list_pointer->s2_time > 0) {
-				loop = true;
-				list_pointer->s2_time -= REVEAL_LOOP_SPEED;
-				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
-				if (list_pointer->width == 2) {
-					addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
-				}
-			} else {
-				attron(A_BOLD);
-				if (has_colors())
-					attron(COLOR_PAIR(1));
-				addstr(list_pointer->source);
-			}
-			
-			refresh();
-
-			attroff(A_BOLD);
-			if (has_colors())
-				attroff(COLOR_PAIR(1));
-		}
-		nms_sleep(REVEAL_LOOP_SPEED);
+		loop = nms_print_list(maxRows, &nms_reveal_loop_inner, &nms_reveal_loop_outer);
 	}
 
 	// Flush any input up to this point
@@ -321,15 +246,107 @@ char nms_exec(char *string) {
 	endwin();
 
 	// Freeing the list. 
-	list_pointer = start;
+	list_pointer = list_head;
 	while (list_pointer != NULL) {
-		temp = list_pointer;
+		list_temp = list_pointer;
 		list_pointer = list_pointer->next;
-		free(temp->source);
-		free(temp);
+		free(list_temp->source);
+		free(list_temp);
 	}
 
 	return ret;
+}
+
+int nms_print_list(int maxRows, void (*inside)(void), int (*outside)(void)) {
+	int r;
+	struct winpos *list_pointer;
+	
+	// Position cursor to top-left
+	move(0,0);
+
+	// Initially display the characters in the terminal with a 'type effect'.
+	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
+		
+		// break out of loop if we reach the bottom of the terminal
+		if (getcury(stdscr) == maxRows - 1) {
+			break;
+		}
+
+		// Print mask character (or space)
+		if (list_pointer->is_space) {
+			addstr(list_pointer->source);
+		} else {
+			if (list_pointer->s1_time <= 0 && list_pointer->s2_time <= 0) {
+				attron(A_BOLD);
+				if (has_colors())
+					attron(COLOR_PAIR(1));
+				addstr(list_pointer->source);
+				attroff(A_BOLD);
+				if (has_colors())
+					attroff(COLOR_PAIR(1));
+			} else {
+				addstr(list_pointer->mask);
+				if (list_pointer->width == 2) {
+					addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
+				}
+			}
+		}
+
+		// Executing inside function
+		inside();
+	}
+
+	// Executing outside function
+	r = outside();
+	
+	return r;
+}
+
+void nms_type_effect(void) {
+	// Refresh window and sleep
+	refresh();
+	nms_sleep(TYPE_EFFECT_SPEED);
+}
+
+int nms_jumble_loop(void) {
+	struct winpos *list_pointer;
+	
+	// remask all chars
+	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
+		list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
+	}
+
+	// Refresh window and sleep
+	refresh();
+	nms_sleep(JUMBLE_LOOP_SPEED);
+	
+	return 0;
+}
+
+void nms_reveal_loop_inner(void) {
+	refresh();
+}
+
+int nms_reveal_loop_outer(void) {
+	int r = 0;
+	struct winpos *list_pointer;
+	
+	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
+		if (list_pointer->s1_time > 0) {
+			list_pointer->s1_time -= REVEAL_LOOP_SPEED;
+			if (list_pointer->s1_time % 500 == 0) {
+				list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
+			}
+			r = 1;
+		} else if (list_pointer->s2_time > 0) {
+			list_pointer->s2_time -= REVEAL_LOOP_SPEED;
+			list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
+			r = 1;
+		}
+	}
+	nms_sleep(REVEAL_LOOP_SPEED);
+	
+	return r;
 }
 
 void nms_sleep(int t) {
@@ -339,6 +356,14 @@ void nms_sleep(int t) {
 	ts.tv_nsec = (t % 1000) * 1000000;
 	
 	nanosleep(&ts, NULL);
+}
+
+void nms_nothing_inner(void) {
+	return;
+}
+
+int nms_nothing_outer(void) {
+	return 0;
 }
 
 void nms_set_foreground_color(char *color) {
