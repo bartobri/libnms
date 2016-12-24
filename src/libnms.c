@@ -26,6 +26,10 @@
 
 #define SHOW_CURSOR          1     // show cursor during the 'decryption'
 
+#define PRINT_TYPE_TYPE      1     // Flag denoting type effect
+#define PRINT_TYPE_JUMBLE    2     // Flag denoting jumble effect
+#define PRINT_TYPE_REVEAL    3     // Flag denoting reveal effect
+
 #define MASK_CHAR_COUNT      218   // Total characters in maskCharTable[] array.
 
 // Window position structure, linked list. Keeps track of every
@@ -42,7 +46,7 @@ struct winpos {
 
 // Function prototypes
 void nms_sleep(int);
-int  nms_print_list(int, int, int, int);
+int  nms_print_list(int, int);
 
 // Character table representing the character set know as CP437 used by
 // the original IBM PC - https://en.wikipedia.org/wiki/Code_page_437
@@ -192,7 +196,7 @@ char nms_exec(char *string) {
 		list_pointer->width = wcwidth(*widec);
 	}
 	
-	nms_print_list(maxRows, 1, 0, 0);
+	nms_print_list(maxRows, PRINT_TYPE_TYPE);
 
 	// Flush any input up to this point
 	flushinp();
@@ -206,11 +210,11 @@ char nms_exec(char *string) {
 
 	// Jumble loop
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
-		nms_print_list(maxRows, 0, 1, 0);
+		nms_print_list(maxRows, PRINT_TYPE_JUMBLE);
 	}
 
 	// Reveal loop
-	while (nms_print_list(maxRows, 0, 0, 1))
+	while (nms_print_list(maxRows, PRINT_TYPE_REVEAL))
 		;
 
 	// Flush any input up to this point
@@ -249,7 +253,7 @@ char nms_exec(char *string) {
 	return ret;
 }
 
-int nms_print_list(int maxRows, int type, int jumble, int reveal) {
+int nms_print_list(int maxRows, int type) {
 	int r = 0;
 	struct winpos *list_pointer;
 	
@@ -270,19 +274,19 @@ int nms_print_list(int maxRows, int type, int jumble, int reveal) {
 			continue;
 		}
 
-		if (reveal && list_pointer->s1_time > 0) {
+		if (type == PRINT_TYPE_REVEAL && list_pointer->s1_time > 0) {
 			list_pointer->s1_time -= REVEAL_LOOP_SPEED;
 			if (list_pointer->s1_time % 500 == 0) {
 				list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
 			}
 			addstr(list_pointer->mask);
 			r = 1;
-		} else if (reveal && list_pointer->s2_time > 0) {
+		} else if (type == PRINT_TYPE_REVEAL && list_pointer->s2_time > 0) {
 			list_pointer->s2_time -= REVEAL_LOOP_SPEED;
 			list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
 			addstr(list_pointer->mask);
 			r = 1;
-		} else if (reveal) {
+		} else if (type == PRINT_TYPE_REVEAL) {
 			attron(A_BOLD);
 			if (has_colors())
 				attron(COLOR_PAIR(1));
@@ -297,22 +301,20 @@ int nms_print_list(int maxRows, int type, int jumble, int reveal) {
 			}
 		}
 
-		if (type) {
+		if (type == PRINT_TYPE_TYPE) {
 			refresh();
 			nms_sleep(TYPE_EFFECT_SPEED);
-		} else if (jumble) {
+		} else if (type == PRINT_TYPE_JUMBLE) {
 			list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
-		} else if (reveal) {
+		} else if (type == PRINT_TYPE_REVEAL) {
 			refresh();
 		}
 	}
 
-	if (jumble) {
+	if (type == PRINT_TYPE_JUMBLE) {
 		refresh();
 		nms_sleep(JUMBLE_LOOP_SPEED);
-	}
-	
-	if (reveal) {
+	} else if (type == PRINT_TYPE_REVEAL) {
 		nms_sleep(REVEAL_LOOP_SPEED);
 	}
 	
