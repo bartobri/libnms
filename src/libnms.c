@@ -143,7 +143,8 @@ char nms_exec(char *string) {
 
 	// Geting input
 	for (i = 0; string[i] != '\0'; ++i) {
-	
+
+		// Allocate memory for next list link
 		if (list_pointer == NULL) {
 			list_pointer = malloc(sizeof(struct winpos));
 			start = list_pointer;
@@ -152,13 +153,7 @@ char nms_exec(char *string) {
 			list_pointer = list_pointer->next;
 		}
 
-		r_time = rand() % 50;
-		r_time_s = r_time * .25;
-		r_time_l = r_time * .75;
-		r_time *= 100;
-		r_time_s *= 100;
-		r_time_l *= 100;
-
+		// Get character's byte-length and store character.
 		if (mblen(&string[i], 4) > 0) {
 			list_pointer->source = malloc(mblen(&string[i], 4) + 1);
 			strncpy(list_pointer->source, &string[i], mblen(&string[i], 4));
@@ -167,16 +162,19 @@ char nms_exec(char *string) {
 		} else {
 			endwin();
 			fprintf(stderr, "Unknown character encountered. Quitting.\n");
-			return '\0';
+			return 0;
 		}
 
+		// Set flag if we have a whitespace character
 		if (strlen(list_pointer->source) == 1 && isspace(list_pointer->source[0]))
 			list_pointer->is_space = 1;
 		else
 			list_pointer->is_space = 0;
-		
+
+		// Set initial mask chharacter
 		list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
 
+		// Set reveal times
 		r_time = rand() % 50;
 		r_time_s = r_time * .25;
 		r_time_l = r_time * .75;
@@ -188,6 +186,7 @@ char nms_exec(char *string) {
 		list_pointer->s2_time = r_time > 1000 ? r_time_s : 0;
 		list_pointer->next = NULL;
 
+		// Set character column width
 		wchar_t widec[sizeof(list_pointer->source)] = {};
 		mbstowcs(widec, list_pointer->source, sizeof(list_pointer->source));
 		list_pointer->width = wcwidth(*widec);
@@ -222,10 +221,7 @@ char nms_exec(char *string) {
 
 	// Jumble loop
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
-		
-		// Position cursor to top-left
 		move(0,0);
-
 		for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
 			if (list_pointer->is_space) {
 				addstr(list_pointer->source);
