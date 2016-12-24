@@ -91,6 +91,9 @@ struct winpos {
 	struct winpos *next;
 };
 
+// Function prototypes
+void nms_sleep(int);
+
 /*
  * void nms_exec(NmsArgs *)
  *
@@ -103,8 +106,8 @@ struct winpos {
  */
 char nms_exec(char *string) {
 	struct winpos *list_pointer = NULL;
-	struct winpos *start;                   // Always points to start of list
-	struct winpos *temp;                    // Used for free()ing the list
+	struct winpos *start;
+	struct winpos *temp;
 	int i;
 	int r_time, r_time_l, r_time_s;
 	char ret = 0;
@@ -201,7 +204,7 @@ char nms_exec(char *string) {
 			}
 		}
 		refresh();
-		usleep(TYPE_EFFECT_SPEED * 1000);
+		nms_sleep(TYPE_EFFECT_SPEED);
 	}
 
 	// Flush any input up to this point
@@ -228,7 +231,7 @@ char nms_exec(char *string) {
 			}
 		}
 		refresh();
-		usleep(JUMBLE_LOOP_SPEED * 1000);
+		nms_sleep(JUMBLE_LOOP_SPEED);
 	}
 
 	// Reveal loop
@@ -274,7 +277,7 @@ char nms_exec(char *string) {
 			if (has_colors())
 				attroff(COLOR_PAIR(1));
 		}
-		usleep(REVEAL_LOOP_SPEED * 1000);
+		nms_sleep(REVEAL_LOOP_SPEED);
 	}
 
 	/*
@@ -337,6 +340,15 @@ char nms_exec(char *string) {
 	}
 
 	return ret;
+}
+
+void nms_sleep(int t) {
+	struct timespec ts;
+	
+	ts.tv_sec = t / 1000;
+	ts.tv_nsec = (t % 1000) * 1000000;
+	
+	nanosleep(&ts, NULL);
 }
 
 void nms_set_foreground_color(char *color) {
