@@ -110,6 +110,7 @@ char nms_exec(char *string) {
 	struct winpos *temp;
 	int i;
 	int r_time, r_time_l, r_time_s;
+	int maxRows;
 	char ret = 0;
 
 	// Lets check the string and make sure we have text. If not, return
@@ -135,6 +136,9 @@ char nms_exec(char *string) {
 		start_color();
 		init_pair(1, foregroundColor, COLOR_BLACK);
 	}
+	
+	// Get terminal window size
+	maxRows = getmaxy(stdscr);
 
 	// Seed my random number generator with the current time
 	srand(time(NULL));
@@ -195,6 +199,12 @@ char nms_exec(char *string) {
 
 	// Initially display the characters in the terminal with a 'type effect'.
 	for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
+		
+		// break out of loop if we reach the bottom of the terminal
+		if (getcury(stdscr) == maxRows - 1) {
+			break;
+		}
+		
 		if (list_pointer->is_space) {
 			addstr(list_pointer->source);
 		} else {
@@ -221,6 +231,12 @@ char nms_exec(char *string) {
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
 		move(0,0);
 		for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
+			
+			// break out of loop if we reach the bottom of the terminal
+			if (getcury(stdscr) == maxRows - 1) {
+				break;
+			}
+		
 			if (list_pointer->is_space) {
 				addstr(list_pointer->source);
 			} else {
@@ -241,6 +257,11 @@ char nms_exec(char *string) {
 		move(0,0);
 		loop = false;
 		for (list_pointer = start; list_pointer != NULL; list_pointer = list_pointer->next) {
+			
+			// break out of loop if we reach the bottom of the terminal
+			if (getcury(stdscr) == maxRows - 1) {
+				break;
+			}
 			
 			if (list_pointer->is_space) {
 				addstr(list_pointer->source);
@@ -279,32 +300,6 @@ char nms_exec(char *string) {
 		}
 		nms_sleep(REVEAL_LOOP_SPEED);
 	}
-
-	/*
-	// Printing remaining characters from list if we stopped short due to 
-	// a terminal row limitation. i.e. the number of textual rows in the input
-	// stream were greater than the number of rows in the terminal.
-	int prevRow;
-	if (list_pointer != NULL) {
-		attron(A_BOLD);
-		if (has_colors())
-			attron(COLOR_PAIR(1));
-		prevRow = list_pointer->row - 1;
-		scroll(stdscr);
-		while (list_pointer != NULL) {
-			while (list_pointer->row > prevRow) {
-				scroll(stdscr);
-				++prevRow;
-			}
-			mvaddstr(termSizeRows -1, list_pointer->col, list_pointer->source);
-			refresh();
-			list_pointer = list_pointer->next;
-		}
-		attroff(A_BOLD);
-		if (has_colors())
-			attroff(COLOR_PAIR(1));
-	}
-	*/
 
 	// Flush any input up to this point
 	flushinp();
