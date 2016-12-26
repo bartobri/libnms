@@ -3,7 +3,9 @@
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the MIT License. See LICENSE for more details.
 
-#include "libnms.h"
+#define _XOPEN_SOURCE 700
+#define NCURSES_WIDECHAR 1
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -12,12 +14,10 @@
 #include <stdbool.h>
 #include <time.h>
 #include <locale.h>
-
-#define __USE_XOPEN
 #include <wchar.h>
-
-#define NCURSES_WIDECHAR 1
 #include <ncurses.h>
+
+#include "libnms.h"
 
 #define TYPE_EFFECT_SPEED    4     // miliseconds per char
 #define JUMBLE_SECONDS       2     // number of seconds for jumble effect
@@ -219,7 +219,7 @@ char nms_exec(char *string) {
 	if (isatty(STDIN_FILENO)) {
 		ret = getch();
 		if (returnOpts != NULL && strlen(returnOpts) > 0)
-			while (index(returnOpts, ret) == NULL) {
+			while (strchr(returnOpts, ret) == NULL) {
 				beep();
 				ret = getch();
 			}
