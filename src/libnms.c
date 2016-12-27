@@ -61,6 +61,7 @@ struct winpos {
 
 // Function prototypes
 void nms_sleep(int);
+void nms_clear_input(void);
 
 // Character table representing the character set know as CP437 used by
 // the original IBM PC - https://en.wikipedia.org/wiki/Code_page_437
@@ -222,9 +223,7 @@ char nms_exec(char *string) {
 	}
 
 	// Flush any input up to this point
-	//flushinp();
-	
-	//TODO - replace flushinp()
+	nms_clear_input();
 
 	// If autoDecrypt flag is set, we sleep. Otherwise, reopen stdin for interactive
 	// input (keyboard), then require user to press a key to continue.
@@ -339,9 +338,7 @@ char nms_exec(char *string) {
 	}
 
 	// Flush any input up to this point
-	//flushinp();
-	
-	//TODO - replace flushinp()
+	nms_clear_input();
 
 	// Position cursor
 	if (inputPositionY >= 0 && inputPositionX >= 0) {
@@ -385,6 +382,13 @@ void nms_sleep(int t) {
 	ts.tv_nsec = (t % 1000) * 1000000;
 	
 	nanosleep(&ts, NULL);
+}
+
+void nms_clear_input(void) {
+	int c;
+
+	while ( (c = getchar()) != '\n' && c != EOF )
+		;
 }
 
 void nms_set_foreground_color(char *color) {
