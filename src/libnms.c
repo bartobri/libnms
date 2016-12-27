@@ -272,8 +272,8 @@ char nms_exec(char *string) {
 			if (list_pointer->time > 0) {
 				
 				// Change the mask randomly
-				if (list_pointer->time < 1000) {
-					if (rand() % 5 == 0) {
+				if (list_pointer->time < 500) {
+					if (rand() % 3 == 0) {
 						list_pointer->mask = maskCharTable[rand() % MASK_CHAR_COUNT];
 					}
 				} else {
