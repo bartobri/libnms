@@ -14,17 +14,38 @@
 #include <time.h>
 #include <locale.h>
 #include <wchar.h>
-#include <ncurses.h>
-
+//#include <ncurses.h>
 #include "libnms.h"
 
+// Color identifiers
+#define COLOR_BLACK   0
+#define COLOR_RED     1
+#define COLOR_GREEN   2
+#define COLOR_YELLOW  3
+#define COLOR_BLUE    4
+#define COLOR_MAGENTA 5
+#define COLOR_CYAN    6
+#define COLOR_WHITE   7
+
+// Macros for VT100 codes
+#define CLEAR_SCR()          printf("\033[2J")           // Clear Screen
+#define CURSOR_HOME()        printf("\033[H")            // Move cursor to home position (0,0)
+#define CURSOR_MOVE(x,y)     printf("\033[%i;%iH", x, y) // Move cursor to x,y
+#define BEEP()               printf("\a");               // terminal bell
+#define BOLD()               printf("\033[1m")           // Cursor bold
+#define FOREGROUND_COLOR(x)  printf("\033[3%im", x)      // Set foreground color
+#define CLEAR_ATTR()         printf("\033[0m")           // Clear bold/color attributes
+#define SCREEN_SAVE()        printf("\033[?47h")         // Save screen display
+#define SCREEN_RESTORE()     printf("\033[?47l")         // Restore screen to previously saved state
+#define CURSOR_SAVE()        printf("\033[s")            // Save cursor position
+#define CURSOR_RESTORE()     printf("\033[u")            // Restore cursor position
+
+// Program settings
 #define TYPE_EFFECT_SPEED    4     // miliseconds per char
 #define JUMBLE_SECONDS       2     // number of seconds for jumble effect
 #define JUMBLE_LOOP_SPEED    35    // miliseconds between each jumble
 #define REVEAL_LOOP_SPEED    50    // miliseconds between each reveal loop
-
 #define SHOW_CURSOR          1     // show cursor during the 'decryption'
-
 #define MASK_CHAR_COUNT      218   // Total characters in maskCharTable[] array.
 
 // Window position structure, linked list. Keeps track of every
@@ -105,32 +126,20 @@ char nms_exec(char *string) {
 	int maxRows;
 	char ret = 0;
 
-	// Lets check the string and make sure we have text. If not, return
-	// with an error message.
+	// Error if we have an empty string.
 	if (string == NULL || string[0] == '\0') {
 		fprintf(stderr, "Error. Empty string.\n");
 		return 0;
 	}
 
-	// Seems to be needed for utf-8 support
+	// Needed for UTF-8 support
 	setlocale(LC_ALL, "");
 
-	// Start and initialize curses mode
-	initscr();
-	cbreak();
-	noecho();
-	scrollok(stdscr, true);
-	if (SHOW_CURSOR == 0)
-		curs_set(0);
-
-	// Setting up and starting colors if terminal supports them
-	if (has_colors()) {
-		start_color();
-		init_pair(1, foregroundColor, COLOR_BLACK);
-	}
-	
 	// Get terminal window size
-	maxRows = getmaxy(stdscr);
+	//maxRows = getmaxy(stdscr);
+
+	// TODO - fix me!
+	maxRows = 30;
 
 	// Seed my random number generator with the current time
 	srand(time(NULL));
@@ -154,7 +163,7 @@ char nms_exec(char *string) {
 			list_pointer->source[mblen(&string[i], 4)] = '\0';
 			i += (mblen(&string[i], 4) - 1);
 		} else {
-			endwin();
+			//endwin();
 			fprintf(stderr, "Unknown character encountered. Quitting.\n");
 			return 0;
 		}
@@ -179,77 +188,90 @@ char nms_exec(char *string) {
 		list_pointer->width = wcwidth(*widec);
 	}
 	
+	// Save terminal state, clear screen, and home the cursor
+	CURSOR_SAVE();
+	SCREEN_SAVE();
+	CLEAR_SCR();
+	CURSOR_HOME();
+	
 	// Print mask characters with 'type effect'
-	move(0,0);
 	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
 		
 		// break out of loop if we reach the bottom of the terminal
-		if (getcury(stdscr) == maxRows - 1) {
-			break;
-		}
+		//if (getcury(stdscr) == maxRows - 1) {
+		//	break;
+		//}
+		
+		//TODO - fix cursor position break
 
 		// Print mask character (or space)
 		if (list_pointer->is_space) {
-			addstr(list_pointer->source);
+			printf("%s", list_pointer->source);
 			continue;
 		}
 		
 		// print mask character
-		addstr(list_pointer->mask);
+		printf("%s", list_pointer->mask);
 		if (list_pointer->width == 2) {
-			addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
+			printf("%s", maskCharTable[rand() % MASK_CHAR_COUNT]);
 		}
 		
-		// refresh and sleep
-		refresh();
+		// flush output and sleep
+		fflush(stdout);
 		nms_sleep(TYPE_EFFECT_SPEED);
 	}
 
 	// Flush any input up to this point
-	flushinp();
+	//flushinp();
+	
+	//TODO - replace flushinp()
 
 	// If autoDecrypt flag is set, we sleep. Otherwise, reopen stdin for interactive
 	// input (keyboard), then require user to press a key to continue.
 	if (autoDecrypt || (!isatty(STDIN_FILENO) && !freopen ("/dev/tty", "r", stdin)))
 		sleep(1);
 	else
-		getch();
+		getchar();
 
 	// Jumble loop
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
 		
+		// Move cursor to home position
+		CURSOR_HOME();
+		
 		// Print new mask for all characters
-		move(0,0);
 		for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
 			
 			// break out of loop if we reach the bottom of the terminal
-			if (getcury(stdscr) == maxRows - 1) {
-				break;
-			}
+			//if (getcury(stdscr) == maxRows - 1) {
+			//	break;
+			//}
+			
+			//TODO - fix cursor position break
 	
 			// Print mask character (or space)
 			if (list_pointer->is_space) {
-				addstr(list_pointer->source);
+				printf("%s", list_pointer->source);
 				continue;
 			}
 			
 			// print new mask character
-			addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
+			printf("%s", maskCharTable[rand() % MASK_CHAR_COUNT]);
 			if (list_pointer->width == 2) {
-				addstr(maskCharTable[rand() % MASK_CHAR_COUNT]);
+				printf("%s", maskCharTable[rand() % MASK_CHAR_COUNT]);
 			}
 		}
 		
-		// refresh and sleep
-		refresh();
+		// flush output and sleep
+		fflush(stdout);
 		nms_sleep(JUMBLE_LOOP_SPEED);
 	}
 
 	// Reveal loop
 	while (!revealed) {
 		
-		// Loop over all characters
-		move(0,0);
+		// Move cursor to home position
+		CURSOR_HOME();
 		
 		// Set revealed flag
 		revealed = 1;
@@ -257,13 +279,15 @@ char nms_exec(char *string) {
 		for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
 			
 			// break out of loop if we reach the bottom of the terminal
-			if (getcury(stdscr) == maxRows - 1) {
-				break;
-			}
+			//if (getcury(stdscr) == maxRows - 1) {
+			//	break;
+			//}
+			
+			//TODO - fix cursor position break
 	
 			// Print mask character (or space)
 			if (list_pointer->is_space) {
-				addstr(list_pointer->source);
+				printf("%s", list_pointer->source);
 				continue;
 			}
 			
@@ -282,7 +306,7 @@ char nms_exec(char *string) {
 				}
 				
 				// Print mask
-				addstr(list_pointer->mask);
+				printf("%s", list_pointer->mask);
 				
 				// Decrement reveal time
 				list_pointer->time -= REVEAL_LOOP_SPEED;
@@ -292,48 +316,55 @@ char nms_exec(char *string) {
 			} else {
 				
 				// Set foreground color for character reveal
-				attron(A_BOLD);
-				if (has_colors())
-					attron(COLOR_PAIR(1));
+				BOLD();
+				FOREGROUND_COLOR(foregroundColor);
+				//attron(A_BOLD);
+				//if (has_colors())
+				//	attron(COLOR_PAIR(1));
 				
 				// print source character
-				addstr(list_pointer->source);
+				printf("%s", list_pointer->source);
 				
 				// Unset foreground color
-				attroff(A_BOLD);
-				if (has_colors())
-					attroff(COLOR_PAIR(1));
+				CLEAR_ATTR();
+				//attroff(A_BOLD);
+				//if (has_colors())
+				//	attroff(COLOR_PAIR(1));
 			}
 		}
 
-		// Refresh and sleep
-		refresh();
+		// flush output and sleep
+		fflush(stdout);
 		nms_sleep(REVEAL_LOOP_SPEED);
 	}
 
 	// Flush any input up to this point
-	flushinp();
+	//flushinp();
+	
+	//TODO - replace flushinp()
 
 	// Position cursor
 	if (inputPositionY >= 0 && inputPositionX >= 0) {
-		move(inputPositionY, inputPositionX);
-		curs_set(1);
+		CURSOR_MOVE(inputPositionY, inputPositionX);
+		//curs_set(1);
+		
+		// TODO - turn on cursor
 	}
 
 	// If stdin is set to the keyboard, user must press a key to continue
 	if (isatty(STDIN_FILENO)) {
-		ret = getch();
+		ret = getchar();
 		if (returnOpts != NULL && strlen(returnOpts) > 0)
 			while (strchr(returnOpts, ret) == NULL) {
-				beep();
-				ret = getch();
+				BEEP();
+				ret = getchar();
 			}
 	} else
 		sleep(2);
 
-
-	// End curses mode
-	endwin();
+	// Restore screen and cursor
+	SCREEN_RESTORE();
+	CURSOR_RESTORE();
 
 	// Freeing the list. 
 	list_pointer = list_head;
@@ -372,6 +403,8 @@ void nms_set_foreground_color(char *color) {
 		foregroundColor = COLOR_GREEN;
 	else if(strcmp("red", color) == 0)
 		foregroundColor = COLOR_RED;
+	else if(strcmp("cyan", color) == 0)
+		foregroundColor = COLOR_CYAN;
 	else
 		foregroundColor = COLOR_BLUE;
 }
