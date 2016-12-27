@@ -4,7 +4,6 @@
 // under the terms of the MIT License. See LICENSE for more details.
 
 #define _XOPEN_SOURCE 700
-#define NCURSES_WIDECHAR 1
 
 #include <stdio.h>
 #include <string.h>
