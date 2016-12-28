@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <ctype.h>
 #include <stdbool.h>
 #include <time.h>
@@ -61,6 +62,8 @@ struct winpos {
 
 // Function prototypes
 void nms_sleep(int);
+int  nms_term_rows(void);
+int  nms_term_cols(void);
 void nms_clear_input(void);
 
 // Character table representing the character set know as CP437 used by
@@ -124,7 +127,7 @@ char nms_exec(char *string) {
 	struct winpos *list_pointer = NULL;
 	struct winpos *list_temp    = NULL;
 	int i, revealed = 0;
-	int maxRows;
+	int maxRows, maxCols, curCol = 0;
 	char ret = 0;
 
 	// Error if we have an empty string.
@@ -136,17 +139,20 @@ char nms_exec(char *string) {
 	// Needed for UTF-8 support
 	setlocale(LC_ALL, "");
 
-	// Get terminal window size
-	//maxRows = getmaxy(stdscr);
-
-	// TODO - fix me!
-	maxRows = 30;
+	// Get terminal window rows/cols
+	maxRows = nms_term_rows();
+	maxCols = nms_term_cols();
 
 	// Seed my random number generator with the current time
 	srand(time(NULL));
 
 	// Geting input
 	for (i = 0; string[i] != '\0'; ++i) {
+		
+		// Don't go beyond maxRows
+		if (maxRows == 1) {
+			break;
+		}
 
 		// Allocate memory for next list link
 		if (list_pointer == NULL) {
@@ -187,6 +193,12 @@ char nms_exec(char *string) {
 		wchar_t widec[sizeof(list_pointer->source)] = {};
 		mbstowcs(widec, list_pointer->source, sizeof(list_pointer->source));
 		list_pointer->width = wcwidth(*widec);
+		
+		// Track row count
+		if (string[i] == '\n' || (curCol += list_pointer->width) >= maxCols) {
+			--maxRows;
+			curCol = 0;
+		}
 	}
 	
 	// Save terminal state, clear screen, and home the cursor
@@ -197,13 +209,6 @@ char nms_exec(char *string) {
 	
 	// Print mask characters with 'type effect'
 	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
-		
-		// break out of loop if we reach the bottom of the terminal
-		//if (getcury(stdscr) == maxRows - 1) {
-		//	break;
-		//}
-		
-		//TODO - fix cursor position break
 
 		// Print mask character (or space)
 		if (list_pointer->is_space) {
@@ -240,13 +245,6 @@ char nms_exec(char *string) {
 		
 		// Print new mask for all characters
 		for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
-			
-			// break out of loop if we reach the bottom of the terminal
-			//if (getcury(stdscr) == maxRows - 1) {
-			//	break;
-			//}
-			
-			//TODO - fix cursor position break
 	
 			// Print mask character (or space)
 			if (list_pointer->is_space) {
@@ -276,13 +274,6 @@ char nms_exec(char *string) {
 		revealed = 1;
 		
 		for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
-			
-			// break out of loop if we reach the bottom of the terminal
-			//if (getcury(stdscr) == maxRows - 1) {
-			//	break;
-			//}
-			
-			//TODO - fix cursor position break
 	
 			// Print mask character (or space)
 			if (list_pointer->is_space) {
@@ -317,18 +308,12 @@ char nms_exec(char *string) {
 				// Set foreground color for character reveal
 				BOLD();
 				FOREGROUND_COLOR(foregroundColor);
-				//attron(A_BOLD);
-				//if (has_colors())
-				//	attron(COLOR_PAIR(1));
 				
 				// print source character
 				printf("%s", list_pointer->source);
 				
 				// Unset foreground color
 				CLEAR_ATTR();
-				//attroff(A_BOLD);
-				//if (has_colors())
-				//	attroff(COLOR_PAIR(1));
 			}
 		}
 
@@ -382,6 +367,20 @@ void nms_sleep(int t) {
 	ts.tv_nsec = (t % 1000) * 1000000;
 	
 	nanosleep(&ts, NULL);
+}
+
+int nms_term_rows(void) {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    
+	return w.ws_row;
+}
+
+int nms_term_cols(void) {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    
+	return w.ws_col;
 }
 
 void nms_clear_input(void) {
