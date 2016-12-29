@@ -66,7 +66,7 @@ struct winpos {
 void nms_sleep(int);
 int  nms_term_rows(void);
 int  nms_term_cols(void);
-void nms_set_echo(int s);
+void nms_set_terminal(int s);
 void nms_clear_input(void);
 
 // Character table representing the character set know as CP437 used by
@@ -146,7 +146,7 @@ char nms_exec(char *string) {
 	}
 	
 	// Turn off terminal echo
-	nms_set_echo(0);
+	nms_set_terminal(0);
 
 	// Needed for UTF-8 support
 	setlocale(LC_ALL, "");
@@ -248,7 +248,8 @@ char nms_exec(char *string) {
 	if (autoDecrypt)
 		sleep(1);
 	else
-		getchar();
+		while ((ret = getchar()) == EOF)
+			;
 
 	// Jumble loop
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
@@ -345,11 +346,13 @@ char nms_exec(char *string) {
 	}
 
 	// User must press a key to continue
-	ret = getchar();
+	while ((ret = getchar()) == EOF)
+		;
 	if (returnOpts != NULL && strlen(returnOpts) > 0) {
 		while (strchr(returnOpts, ret) == NULL) {
 			BEEP();
-			ret = getchar();
+			while ((ret = getchar()) == EOF)
+				;
 		}
 	}
 
@@ -359,7 +362,7 @@ char nms_exec(char *string) {
 	CURSOR_SHOW();
 	
 	// Turn on terminal echo
-	nms_set_echo(1);
+	nms_set_terminal(1);
 
 	// Freeing the list. 
 	list_pointer = list_head;
@@ -396,7 +399,7 @@ int nms_term_cols(void) {
 	return w.ws_col;
 }
 
-void nms_set_echo(int s) {
+void nms_set_terminal(int s) {
 	struct termios tp;
 	static struct termios save;
 	static int state = 1;
@@ -408,7 +411,7 @@ void nms_set_echo(int s) {
 		
 		save = tp;
 		
-		tp.c_lflag &= ~ECHO;
+		tp.c_lflag &=(~ICANON & ~ECHO);
 		
 		if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tp) == -1) {
 			return;
@@ -424,7 +427,7 @@ void nms_set_echo(int s) {
 void nms_clear_input(void) {
 	int c;
 
-	while ( (c = getchar()) != '\n' && c != EOF )
+	while ((c = getchar()) != EOF)
 		;
 }
 
