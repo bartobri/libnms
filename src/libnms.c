@@ -183,8 +183,8 @@ char nms_exec(char *string) {
 			list_pointer->source[mblen(&string[i], 4)] = '\0';
 			i += (mblen(&string[i], 4) - 1);
 		} else {
-			//endwin();
 			fprintf(stderr, "Unknown character encountered. Quitting.\n");
+			nms_set_terminal(1);
 			return 0;
 		}
 
