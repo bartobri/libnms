@@ -68,6 +68,7 @@ int  nms_term_rows(void);
 int  nms_term_cols(void);
 void nms_set_terminal(int s);
 void nms_clear_input(void);
+char nms_get_char(void);
 
 // Character table representing the character set know as CP437 used by
 // the original IBM PC - https://en.wikipedia.org/wiki/Code_page_437
@@ -145,7 +146,7 @@ char nms_exec(char *string) {
 		return 0;
 	}
 	
-	// Turn off terminal echo
+	// Turn off terminal echo and line buffering
 	nms_set_terminal(0);
 
 	// Needed for UTF-8 support
@@ -248,8 +249,7 @@ char nms_exec(char *string) {
 	if (autoDecrypt)
 		sleep(1);
 	else
-		while ((ret = getchar()) == EOF)
-			;
+		nms_get_char();
 
 	// Jumble loop
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
@@ -346,13 +346,11 @@ char nms_exec(char *string) {
 	}
 
 	// User must press a key to continue
-	while ((ret = getchar()) == EOF)
-		;
+	ret = nms_get_char();
 	if (returnOpts != NULL && strlen(returnOpts) > 0) {
 		while (strchr(returnOpts, ret) == NULL) {
 			BEEP();
-			while ((ret = getchar()) == EOF)
-				;
+			ret = nms_get_char();
 		}
 	}
 
@@ -361,7 +359,7 @@ char nms_exec(char *string) {
 	CURSOR_RESTORE();
 	CURSOR_SHOW();
 	
-	// Turn on terminal echo
+	// Turn on terminal echo and line buffering
 	nms_set_terminal(1);
 
 	// Freeing the list. 
@@ -429,6 +427,21 @@ void nms_clear_input(void) {
 
 	while ((c = getchar()) != EOF)
 		;
+}
+
+char nms_get_char(void) {
+	struct timespec ts;
+	int t = 50;
+	char c;
+	
+	ts.tv_sec = t / 1000;
+	ts.tv_nsec = (t % 1000) * 1000000;
+
+	while ((c = getchar()) == EOF) {
+		nanosleep(&ts, NULL);
+	}
+	
+	return c;
 }
 
 void nms_set_foreground_color(char *color) {
