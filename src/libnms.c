@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <ctype.h>
@@ -65,6 +66,7 @@ struct winpos {
 void nms_sleep(int);
 int  nms_term_rows(void);
 int  nms_term_cols(void);
+void nms_set_echo(int s);
 void nms_clear_input(void);
 
 // Character table representing the character set know as CP437 used by
@@ -136,6 +138,9 @@ char nms_exec(char *string) {
 		fprintf(stderr, "Error. Empty string.\n");
 		return 0;
 	}
+	
+	// Turn off terminal echo
+	nms_set_echo(0);
 
 	// Needed for UTF-8 support
 	setlocale(LC_ALL, "");
@@ -348,6 +353,9 @@ char nms_exec(char *string) {
 	SCREEN_RESTORE();
 	CURSOR_RESTORE();
 	CURSOR_SHOW();
+	
+	// Turn on terminal echo
+	nms_set_echo(1);
 
 	// Freeing the list. 
 	list_pointer = list_head;
@@ -382,6 +390,31 @@ int nms_term_cols(void) {
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     
 	return w.ws_col;
+}
+
+void nms_set_echo(int s) {
+	struct termios tp;
+	static struct termios save;
+	static int state = 1;
+	
+	if (s == 0) {
+		if (tcgetattr(STDERR_FILENO, &tp) == -1) {
+			return;
+		}
+		
+		save = tp;
+		
+		tp.c_lflag &= ~ECHO;
+		
+		if (tcsetattr(STDERR_FILENO, TCSAFLUSH, &tp) == -1) {
+			return;
+		}
+	} else {
+		if (state == 0 && tcsetattr(STDERR_FILENO, TCSANOW, &save) == -1)
+			return;
+	}
+	
+	state = s;
 }
 
 void nms_clear_input(void) {
