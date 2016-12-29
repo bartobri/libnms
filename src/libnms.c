@@ -139,6 +139,12 @@ char nms_exec(char *string) {
 		return 0;
 	}
 	
+	// Reassociate STDIN to the terminal is needed
+	if (!isatty(STDIN_FILENO) && !freopen ("/dev/tty", "r", stdin)) {
+		fprintf(stderr, "Error. Can't associate STDIN with terminal.\n");
+		return 0;
+	}
+	
 	// Turn off terminal echo
 	nms_set_echo(0);
 
@@ -237,9 +243,9 @@ char nms_exec(char *string) {
 	// Flush any input up to this point
 	nms_clear_input();
 
-	// If autoDecrypt flag is set, we sleep. Otherwise, reopen stdin for interactive
-	// input (keyboard), then require user to press a key to continue.
-	if (autoDecrypt || (!isatty(STDIN_FILENO) && !freopen ("/dev/tty", "r", stdin)))
+	// If autoDecrypt flag is set, we sleep. Otherwise require user to
+	// press a key to continue.
+	if (autoDecrypt)
 		sleep(1);
 	else
 		getchar();
@@ -338,16 +344,14 @@ char nms_exec(char *string) {
 		CURSOR_SHOW();
 	}
 
-	// If stdin is set to the keyboard, user must press a key to continue
-	if (isatty(STDIN_FILENO)) {
-		ret = getchar();
-		if (returnOpts != NULL && strlen(returnOpts) > 0)
-			while (strchr(returnOpts, ret) == NULL) {
-				BEEP();
-				ret = getchar();
-			}
-	} else
-		sleep(2);
+	// User must press a key to continue
+	ret = getchar();
+	if (returnOpts != NULL && strlen(returnOpts) > 0) {
+		while (strchr(returnOpts, ret) == NULL) {
+			BEEP();
+			ret = getchar();
+		}
+	}
 
 	// Restore screen and cursor
 	SCREEN_RESTORE();
@@ -398,7 +402,7 @@ void nms_set_echo(int s) {
 	static int state = 1;
 	
 	if (s == 0) {
-		if (tcgetattr(STDERR_FILENO, &tp) == -1) {
+		if (tcgetattr(STDIN_FILENO, &tp) == -1) {
 			return;
 		}
 		
@@ -406,11 +410,11 @@ void nms_set_echo(int s) {
 		
 		tp.c_lflag &= ~ECHO;
 		
-		if (tcsetattr(STDERR_FILENO, TCSAFLUSH, &tp) == -1) {
+		if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tp) == -1) {
 			return;
 		}
 	} else {
-		if (state == 0 && tcsetattr(STDERR_FILENO, TCSANOW, &save) == -1)
+		if (state == 0 && tcsetattr(STDIN_FILENO, TCSANOW, &save) == -1)
 			return;
 	}
 	
