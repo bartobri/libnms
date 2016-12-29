@@ -40,13 +40,14 @@
 #define SCREEN_RESTORE()     printf("\033[?47l")         // Restore screen to previously saved state
 #define CURSOR_SAVE()        printf("\033[s")            // Save cursor position
 #define CURSOR_RESTORE()     printf("\033[u")            // Restore cursor position
+#define CURSOR_HIDE()        printf("\033[?25l")         // Hide cursor
+#define CURSOR_SHOW()        printf("\033[?25h")         // Unhide cursor
 
 // Program settings
 #define TYPE_EFFECT_SPEED    4     // miliseconds per char
 #define JUMBLE_SECONDS       2     // number of seconds for jumble effect
 #define JUMBLE_LOOP_SPEED    35    // miliseconds between each jumble
 #define REVEAL_LOOP_SPEED    50    // miliseconds between each reveal loop
-#define SHOW_CURSOR          1     // show cursor during the 'decryption'
 #define MASK_CHAR_COUNT      218   // Total characters in maskCharTable[] array.
 
 // Window position structure, linked list. Keeps track of every
@@ -201,11 +202,12 @@ char nms_exec(char *string) {
 		}
 	}
 	
-	// Save terminal state, clear screen, and home the cursor
+	// Save terminal state, clear screen, and home/hide the cursor
 	CURSOR_SAVE();
 	SCREEN_SAVE();
 	CLEAR_SCR();
 	CURSOR_HOME();
+	CURSOR_HIDE();
 	
 	// Print mask characters with 'type effect'
 	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
@@ -328,9 +330,7 @@ char nms_exec(char *string) {
 	// Position cursor
 	if (inputPositionY >= 0 && inputPositionX >= 0) {
 		CURSOR_MOVE(inputPositionY, inputPositionX);
-		//curs_set(1);
-		
-		// TODO - turn on cursor
+		CURSOR_SHOW();
 	}
 
 	// If stdin is set to the keyboard, user must press a key to continue
@@ -347,6 +347,7 @@ char nms_exec(char *string) {
 	// Restore screen and cursor
 	SCREEN_RESTORE();
 	CURSOR_RESTORE();
+	CURSOR_SHOW();
 
 	// Freeing the list. 
 	list_pointer = list_head;
