@@ -114,7 +114,6 @@ static char *returnOpts     = NULL;         // Return option setting
 static int autoDecrypt      = 0;            // Auto-decrypt flag
 static int inputPositionX   = -1;           // X coordinate for input position
 static int inputPositionY   = -1;           // Y coordinate for input position
-static struct winpos *list_head    = NULL;
 
 /*
  * void nms_exec(NmsArgs *)
@@ -128,6 +127,7 @@ static struct winpos *list_head    = NULL;
  */
 char nms_exec(char *string) {
 	struct winpos *list_pointer = NULL;
+	struct winpos *list_head    = NULL;
 	struct winpos *list_temp    = NULL;
 	int i, revealed = 0;
 	int maxRows, maxCols, curCol = 0;
