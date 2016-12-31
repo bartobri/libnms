@@ -16,7 +16,6 @@
 #include <time.h>
 #include <locale.h>
 #include <wchar.h>
-//#include <ncurses.h>
 #include "libnms.h"
 
 // Color identifiers
@@ -199,14 +198,15 @@ char nms_exec(char *string) {
 
 		// Set reveal time
 		list_pointer->time = rand() % 5000;
-		
-		list_pointer->next = NULL;
 
 		// Set character column width
 		wchar_t widec[sizeof(list_pointer->source)] = {};
 		mbstowcs(widec, list_pointer->source, sizeof(list_pointer->source));
 		list_pointer->width = wcwidth(*widec);
 		
+		// Set next node to null
+		list_pointer->next = NULL;
+
 		// Track row count
 		if (string[i] == '\n' || (curCol += list_pointer->width) >= maxCols) {
 			--maxRows;
