@@ -69,6 +69,13 @@ void nms_set_terminal(int s);
 void nms_clear_input(void);
 char nms_get_char(void);
 
+// NMS settings
+static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
+static char *returnOpts     = NULL;         // Return option setting
+static int autoDecrypt      = 0;            // Auto-decrypt flag
+static int inputPositionX   = -1;           // X coordinate for input position
+static int inputPositionY   = -1;           // Y coordinate for input position
+
 // Character table representing the character set know as CP437 used by
 // the original IBM PC - https://en.wikipedia.org/wiki/Code_page_437
 static char *maskCharTable[] = {
@@ -107,13 +114,6 @@ static char *maskCharTable[] = {
 	"\xe2\x8c\xa1", "\xe2\x89\x88", "\xe2\x88\x99", "\xe2\x88\x9a",
 	"\xe2\x81\xbf", "\xe2\x96\xa0"
 };
-
-// Static variable settings
-static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
-static char *returnOpts     = NULL;         // Return option setting
-static int autoDecrypt      = 0;            // Auto-decrypt flag
-static int inputPositionX   = -1;           // X coordinate for input position
-static int inputPositionY   = -1;           // Y coordinate for input position
 
 /*
  * void nms_exec(NmsArgs *)
