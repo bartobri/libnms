@@ -61,13 +61,13 @@ struct winpos {
 	struct winpos *next;
 };
 
-// Function prototypes
-void nms_sleep(int);
-int  nms_term_rows(void);
-int  nms_term_cols(void);
-void nms_set_terminal(int s);
-void nms_clear_input(void);
-char nms_get_char(void);
+// Static function prototypes
+static void nms_sleep(int);
+static int  nms_term_rows(void);
+static int  nms_term_cols(void);
+static void nms_set_terminal(int s);
+static void nms_clear_input(void);
+static char nms_get_char(void);
 
 // NMS settings
 static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
@@ -374,76 +374,6 @@ char nms_exec(char *string) {
 	return ret;
 }
 
-void nms_sleep(int t) {
-	struct timespec ts;
-	
-	ts.tv_sec = t / 1000;
-	ts.tv_nsec = (t % 1000) * 1000000;
-	
-	nanosleep(&ts, NULL);
-}
-
-int nms_term_rows(void) {
-	struct winsize w;
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    
-	return w.ws_row;
-}
-
-int nms_term_cols(void) {
-	struct winsize w;
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    
-	return w.ws_col;
-}
-
-void nms_set_terminal(int s) {
-	struct termios tp;
-	static struct termios save;
-	static int state = 1;
-	
-	if (s == 0) {
-		if (tcgetattr(STDIN_FILENO, &tp) == -1) {
-			return;
-		}
-		
-		save = tp;
-		
-		tp.c_lflag &=(~ICANON & ~ECHO);
-		
-		if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tp) == -1) {
-			return;
-		}
-	} else {
-		if (state == 0 && tcsetattr(STDIN_FILENO, TCSANOW, &save) == -1)
-			return;
-	}
-	
-	state = s;
-}
-
-void nms_clear_input(void) {
-	int c;
-
-	while ((c = getchar()) != EOF)
-		;
-}
-
-char nms_get_char(void) {
-	struct timespec ts;
-	int t = 50;
-	char c;
-	
-	ts.tv_sec = t / 1000;
-	ts.tv_nsec = (t % 1000) * 1000000;
-
-	while ((c = getchar()) == EOF) {
-		nanosleep(&ts, NULL);
-	}
-	
-	return c;
-}
-
 void nms_set_foreground_color(char *color) {
 
 	if(strcmp("white", color) == 0)
@@ -483,4 +413,74 @@ void nms_set_input_position(int x, int y) {
 		inputPositionX = x;
 		inputPositionY = y;
 	}
+}
+
+static void nms_sleep(int t) {
+	struct timespec ts;
+	
+	ts.tv_sec = t / 1000;
+	ts.tv_nsec = (t % 1000) * 1000000;
+	
+	nanosleep(&ts, NULL);
+}
+
+static int nms_term_rows(void) {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    
+	return w.ws_row;
+}
+
+static int nms_term_cols(void) {
+	struct winsize w;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    
+	return w.ws_col;
+}
+
+static void nms_set_terminal(int s) {
+	struct termios tp;
+	static struct termios save;
+	static int state = 1;
+	
+	if (s == 0) {
+		if (tcgetattr(STDIN_FILENO, &tp) == -1) {
+			return;
+		}
+		
+		save = tp;
+		
+		tp.c_lflag &=(~ICANON & ~ECHO);
+		
+		if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &tp) == -1) {
+			return;
+		}
+	} else {
+		if (state == 0 && tcsetattr(STDIN_FILENO, TCSANOW, &save) == -1)
+			return;
+	}
+	
+	state = s;
+}
+
+static void nms_clear_input(void) {
+	int c;
+
+	while ((c = getchar()) != EOF)
+		;
+}
+
+static char nms_get_char(void) {
+	struct timespec ts;
+	int t = 50;
+	char c;
+	
+	ts.tv_sec = t / 1000;
+	ts.tv_nsec = (t % 1000) * 1000000;
+
+	while ((c = getchar()) == EOF) {
+		nanosleep(&ts, NULL);
+	}
+	
+	return c;
 }
