@@ -59,15 +59,15 @@
 #define REVEAL_LOOP_SPEED    50    // miliseconds between each reveal loop
 #define MASK_CHAR_COUNT      218   // Total characters in maskCharTable[] array.
 
-// Window position structure, linked list. Keeps track of every
-// character's position on the terminal, as well as other attributes.
-struct winpos {
+// Character attribute structure, linked list. Keeps track of every
+// character's attributes required for rendering and decryption effect.
+struct charAttr {
 	char *source;
 	char *mask;
 	int width;
 	int is_space;
 	int time;
-	struct winpos *next;
+	struct charAttr *next;
 };
 
 // Static function prototypes
@@ -131,9 +131,9 @@ static char *maskCharTable[] = {
  * last character pressed by the user.
  */
 char nms_exec(char *string) {
-	struct winpos *list_pointer = NULL;
-	struct winpos *list_head    = NULL;
-	struct winpos *list_temp    = NULL;
+	struct charAttr *list_pointer = NULL;
+	struct charAttr *list_head    = NULL;
+	struct charAttr *list_temp    = NULL;
 	int i, revealed = 0;
 	int maxRows, maxCols, curCol = 0;
 	char ret = 0;
@@ -173,10 +173,10 @@ char nms_exec(char *string) {
 
 		// Allocate memory for next list link
 		if (list_pointer == NULL) {
-			list_pointer = malloc(sizeof(struct winpos));
+			list_pointer = malloc(sizeof(struct charAttr));
 			list_head = list_pointer;
 		} else {
-			list_pointer->next = malloc(sizeof(struct winpos));
+			list_pointer->next = malloc(sizeof(struct charAttr));
 			list_pointer = list_pointer->next;
 		}
 
