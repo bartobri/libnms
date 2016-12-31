@@ -1,7 +1,16 @@
-// Copyright (c) 2016 Brian Barto
-//
-// This program is free software; you can redistribute it and/or modify it
-// under the terms of the MIT License. See LICENSE for more details.
+/*
+ * Copyright (c) 2016 Brian Barto
+ * 
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the MIT License. See LICENSE for more details.
+ */
+ 
+/* 
+ * DESCRIPTION
+ * 
+ * The libnms library encapsulates the functuionality required to produce the
+ * famous "decrypting text" sceen effect from the 1992 hacker movie "Sneakers".
+ */
 
 #define _XOPEN_SOURCE 700
 
@@ -116,14 +125,10 @@ static char *maskCharTable[] = {
 };
 
 /*
- * void nms_exec(NmsArgs *)
- *
- * DESCR:
- * Performs "decryption" effect, Returns the character pressed at the last pause, or
- * '\0' (null character) if there are any problems.
- *
- * ARGS:
- * char *string - character string
+ * nms_exec() - This function is passed a pointer to a character string
+ * and displays the contents of the string in a way that mimicks the
+ * "decrypting text" effect in the 1992 movie Sneakers. It returns the
+ * last character pressed by the user.
  */
 char nms_exec(char *string) {
 	struct winpos *list_pointer = NULL;
@@ -374,6 +379,13 @@ char nms_exec(char *string) {
 	return ret;
 }
 
+/*
+ * nms_set_foreground_color() sets the foreground color of the unencrypted
+ * characters as they are revealed to the color indicated by the 'color'
+ * argument. Valid arguments are "white", "yellow", "magenta", "blue",
+ * "green", "red", and "cyan". This function will default to blue if
+ * passed an invalid color. No value is returned.
+ */
 void nms_set_foreground_color(char *color) {
 
 	if(strcmp("white", color) == 0)
@@ -396,11 +408,19 @@ void nms_set_foreground_color(char *color) {
 		foregroundColor = COLOR_BLUE;
 }
 
+/*
+ * nms_set_return_opts() takes a character sting and copies it to the
+ * returnOpts setting used by nms_exec().
+ */
 void nms_set_return_opts(char *opts) {
 	returnOpts = realloc(returnOpts, strlen(opts) + 1);
 	strcpy(returnOpts, opts);
 }
 
+/*
+ * nms_set_auto_decrypt() sets the autoDecrypt flag according to the
+ * true/false value of the 'setting' argument.
+ */
 void nms_set_auto_decrypt(int setting) {
 	if (setting)
 		autoDecrypt = 1;
@@ -408,6 +428,11 @@ void nms_set_auto_decrypt(int setting) {
 		autoDecrypt = 0;
 }
 
+/*
+ * nms_set_input_position() sets the desired coordinate of the cursor in
+ * the terminal when accepting user input after nms_exec() reveals the
+ * unencrypted characters.
+ */
 void nms_set_input_position(int x, int y) {
 	if (x >= 0 && y >= 0) {
 		inputPositionX = x;
@@ -415,6 +440,9 @@ void nms_set_input_position(int x, int y) {
 	}
 }
 
+/*
+ * nms_sleep() sleeps for the number of miliseconds indicated by 't'.
+ */
 static void nms_sleep(int t) {
 	struct timespec ts;
 	
@@ -424,6 +452,10 @@ static void nms_sleep(int t) {
 	nanosleep(&ts, NULL);
 }
 
+/*
+ * nms_term_rows() gets and returns the number of rows in the current
+ * terminal window.
+ */
 static int nms_term_rows(void) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -431,6 +463,10 @@ static int nms_term_rows(void) {
 	return w.ws_row;
 }
 
+/*
+ * nms_term_cols() gets and returns the number of cols in the current
+ * terminal window.
+ */
 static int nms_term_cols(void) {
 	struct winsize w;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -438,6 +474,12 @@ static int nms_term_cols(void) {
 	return w.ws_col;
 }
 
+/*
+ * nms_set_terminal() turns off terminal echo and line buffering when
+ * passed an integer value that evaluates to true. It restores the
+ * original terminal values when passed an integer value that evaluates
+ * to false.
+ */
 static void nms_set_terminal(int s) {
 	struct termios tp;
 	static struct termios save;
@@ -463,6 +505,10 @@ static void nms_set_terminal(int s) {
 	state = s;
 }
 
+/*
+ * nms_clear_input() clears the input buffer of all characters up to
+ * the EOF character.
+ */
 static void nms_clear_input(void) {
 	int c;
 
@@ -470,6 +516,10 @@ static void nms_clear_input(void) {
 		;
 }
 
+/*
+ * nms_get_char() returns the next character in the input buffer. In the
+ * case of an EOF character, it blocks until the user presses a key.
+ */
 static char nms_get_char(void) {
 	struct timespec ts;
 	int t = 50;
