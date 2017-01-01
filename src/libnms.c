@@ -10,6 +10,7 @@
  * 
  * The libnms library encapsulates the functuionality required to produce the
  * famous "decrypting text" sceen effect from the 1992 hacker movie "Sneakers".
+ * For more, go to: https://github.com/bartobri/libnms
  */
 
 #define _XOPEN_SOURCE 700
