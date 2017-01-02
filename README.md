@@ -72,7 +72,7 @@ int main(void) {
     nms_set_foreground_color("red");
     nms_exec("setec astronomy");
     
-    // Initiate decryption sequence without user action
+    // Initiate decryption sequence without requiring a key press
     nms_set_auto_decrypt(1);
     nms_exec("setec astronomy");
     
@@ -94,6 +94,7 @@ int main(void) {
 **Functions**
 
 `char nms_exec(char *)`
+
 The nms_exec() function accepts a character pointer to a string and performs
 the decryption effect on it. By default the effect will "type" the character
 on to the screen and then wait for the user to press a key to initiate the
@@ -102,18 +103,21 @@ for the user to press a key before returning execution to the calling function.
 The last character pressed is returned.
 
 `void nms_set_foreground_color(char *)`
+
 The nms_set_foreground_color() function accepts a character pointer to a
 string indicating the desired foreground color of the decrypted characters.
 Valid options are "white", "yellow", "black", "magenta", "blue", "green",
 "red" and "cyan". Blue is the default. No value is returned.
 
 `void nms_set_auto_decrypt(int)`
+
 The nms_set_auto_decrypt() function accepts an integer and, if evaluated
 as true, sets a flag that nms_exec() uses to initiate the decryption sequence
 without the need for the user to press a key. If the integer argument
 is evaluated as false, it unsets the flag.
 
 `void nms_set_return_opts(char *)`
+
 The nms_set_return_opts() function accepts a character pointer to a string
 containing the character options that the user much press in order to
 return execution to the calling function. This is intended to be used for
@@ -122,6 +126,7 @@ selections that must be chosen from. Note that nms_exec() returns the
 selection to the calling function.
 
 `void nms_set_input_position(int, int)`
+
 The nms_set_input_position() sets the x/y coordinates for the cursor position
 when nms_exec() pauses for user input after the decryption sequence. This is
 meant to be used in conjunction with the nms_set_return_opts() to move the
