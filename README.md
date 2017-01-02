@@ -1,18 +1,29 @@
 LibNMS
 ======
 
-This project is a compliment to my [no-more-secrets project](https://github.com/bartobri/no-more-secrets)
-which provides a comamnd line tool for reproducing the famouse
-"decrypting text" effect shown in the 1992 movie [Sneakers](https://www.youtube.com/watch?v=F5bAa6gFvLs&t=35).
+This project provides a dynamically linkable library that contains the
+necessary functionality to recreate the famouse "decrypting text" effect
+shown in the 1992 movie [Sneakers](https://www.youtube.com/watch?v=F5bAa6gFvLs&t=35).
 
-This project provides a dynamically linkable library that provides a
-simple interface for reproducing this effect in other projects.
+It's intended purpose is to be used for other software projects whos author
+may wish to use this effect when presenting data to the user. This library
+also provides capabilities for getting user input in the case of a menu
+or set of selections is presented to the user. See the [usage](#usage) section
+for details.
 
-This library relies on ANSI/VT100 escape sequences. Most modern terminal
-programs support these sequences. If yours does not, you can install and
-run this through an alternate terminal program like xTerm.
+This library has no dependencies, but it does rely on ANSI/VT100 escape
+sequences to recreate the effect. Most modern terminal programs support
+these sequences so this should not be an issue for most users. If yours
+does not, you can install and run this through an alternate terminal program
+like xTerm.
 
-Effect example:
+If you wish to get an idea of how this looks or if it will work on your
+system, without needing to write a program that uses this library, you
+download aand install my other project, [no-more-secrets project](https://github.com/bartobri/no-more-secrets),
+which implements this same code in a command line tool that applies this
+effect to piped data.
+
+Screen Cap:
 
 SCREEN SHOT HERE
 
