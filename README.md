@@ -18,8 +18,8 @@ does not, you can install and run this through an alternate terminal program
 like xTerm.
 
 If you wish to get an idea of how this looks or if it will work on your
-system, without needing to write a program that uses this library, you
-download aand install my other project, [no-more-secrets project](https://github.com/bartobri/no-more-secrets),
+system, without needing to implement this library inside a seperate program,
+you can download and install my other project, [no-more-secrets project](https://github.com/bartobri/no-more-secrets),
 which implements this same code in a command line tool that applies this
 effect to piped data.
 
