@@ -78,6 +78,7 @@ static int  nms_term_cols(void);
 static void nms_set_terminal(int s);
 static void nms_clear_input(void);
 static char nms_get_char(void);
+static int  nms_get_cursor_row(void);
 
 // NMS settings
 static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
@@ -137,7 +138,7 @@ char nms_exec(char *string) {
 	struct charAttr *list_head    = NULL;
 	struct charAttr *list_temp    = NULL;
 	int i, revealed = 0;
-	int maxRows, maxCols, curCol = 0;
+	int maxRows, maxCols, curRow = 0, curCol = 0;
 	char ret = 0;
 
 	// Error if we have an empty string.
@@ -164,6 +165,11 @@ char nms_exec(char *string) {
 
 	// Seed my random number generator with the current time
 	srand(time(NULL));
+	
+	// Get cursor position if we are not clearing the screen
+	if (!clearSrc) {
+		curRow = nms_get_cursor_row();
+	}
 
 	// Geting input
 	for (i = 0; string[i] != '\0'; ++i) {
@@ -562,4 +568,37 @@ static char nms_get_char(void) {
 	}
 	
 	return c;
+}
+
+/*
+ * nms_get_cursor_row() returns the row position of the cursor as reported
+ * by the terminal program via the ANSI escape code
+ */
+static int nms_get_cursor_row(void) {
+	int i, r = 0;
+	int row = 0;
+	char buf[10];
+	char *cmd = "\033[6n";
+	
+	memset(buf, 0, sizeof(buf));
+
+	write(STDOUT_FILENO, cmd, sizeof(cmd));
+	
+	r = read(STDIN_FILENO, buf, sizeof(buf));
+	
+	for (i = 0; i < r; ++i) {
+		if (buf[i] == 27 || buf[i] == '[') {
+			continue;
+		}
+
+		if (buf[i] >= '0' && buf[i] <= '9') {
+			row = (row * 10) + (buf[i] - '0');
+		}
+		
+		if (buf[i] == ';') {
+			break;
+		}
+	}
+	
+	return row;
 }
