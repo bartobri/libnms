@@ -17,10 +17,10 @@ LIB=lib
 CC ?= gcc
 CFLAGS ?= -Wextra -Wall -iquote$(SRC) -fpic
 
-.PHONY: all install uninstall clean
-
 HEADERS = libnms.h
 LIBRARIES = libnms.so
+
+.PHONY: all install uninstall clean
 
 all: $(LIBRARIES)
 	
@@ -45,7 +45,14 @@ install:
 	install -d $(DESTDIR)$(includedir)
 	cd $(LIB) && install $(LIBRARIES) $(DESTDIR)$(libdir)
 	cd $(SRC) && install $(HEADERS) $(DESTDIR)$(includedir)
+	if [ -d /etc/ld.so.conf.d ]; then \
+		echo "$(DESTDIR)$(libdir)" > /etc/ld.so.conf.d/libnms.conf ; \
+	fi
+	ldconfig
 
 uninstall:
 	for library in $(LIBRARIES); do rm $(DESTDIR)$(libdir)/$$library; done
 	for header in $(HEADERS); do rm $(DESTDIR)$(includedir)/$$header; done
+	if [ -a /etc/ld.so.conf.d/libnms.conf ] ; then \
+		rm /etc/ld.so.conf.d/libnms.conf ; \
+	fi
