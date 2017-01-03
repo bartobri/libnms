@@ -83,6 +83,7 @@ static char nms_get_char(void);
 static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
 static char *returnOpts     = NULL;         // Return option setting
 static int autoDecrypt      = 0;            // Auto-decrypt flag
+static int clearSrc         = 1;            // clearSrc flag
 static int inputPositionX   = -1;           // X coordinate for input position
 static int inputPositionY   = -1;           // Y coordinate for input position
 
@@ -222,10 +223,12 @@ char nms_exec(char *string) {
 	
 	// Save terminal state, clear screen, and home/hide the cursor
 	CURSOR_SAVE();
-	SCREEN_SAVE();
-	CLEAR_SCR();
-	CURSOR_HOME();
-	CURSOR_HIDE();
+	if (clearSrc) {
+		SCREEN_SAVE();
+		CLEAR_SCR();
+		CURSOR_HOME();
+		CURSOR_HIDE();
+	}
 	
 	// Print mask characters with 'type effect'
 	for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
@@ -261,7 +264,11 @@ char nms_exec(char *string) {
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
 		
 		// Move cursor to home position
-		CURSOR_HOME();
+		if (clearSrc) {
+			CURSOR_HOME();
+		} else {
+			CURSOR_RESTORE();
+		}
 		
 		// Print new mask for all characters
 		for (list_pointer = list_head; list_pointer != NULL; list_pointer = list_pointer->next) {
@@ -288,7 +295,11 @@ char nms_exec(char *string) {
 	while (!revealed) {
 		
 		// Move cursor to home position
-		CURSOR_HOME();
+		if (clearSrc) {
+			CURSOR_HOME();
+		} else {
+			CURSOR_RESTORE();
+		}
 		
 		// Set revealed flag
 		revealed = 1;
@@ -361,9 +372,11 @@ char nms_exec(char *string) {
 	}
 
 	// Restore screen and cursor
-	SCREEN_RESTORE();
-	CURSOR_RESTORE();
-	CURSOR_SHOW();
+	if (clearSrc) {
+		SCREEN_RESTORE();
+		CURSOR_SHOW();
+		CURSOR_RESTORE();
+	}
 	
 	// Turn on terminal echo and line buffering
 	nms_set_terminal(1);
@@ -430,6 +443,17 @@ void nms_set_auto_decrypt(int setting) {
 }
 
 /*
+ * nms_set_clear_scr() sets the clearSrc flag according to the
+ * true/false value of the 'setting' argument.
+ */
+void nms_set_clear_scr(int setting) {
+	if (setting)
+		clearSrc = 1;
+	else
+		clearSrc = 0;
+}
+
+/*
  * nms_set_input_position() sets the desired coordinate of the cursor in
  * the terminal when accepting user input after nms_exec() reveals the
  * unencrypted characters.
@@ -490,7 +514,7 @@ static void nms_set_terminal(int s) {
 		if (tcgetattr(STDIN_FILENO, &tp) == -1) {
 			return;
 		}
-		
+
 		save = tp;
 		
 		tp.c_lflag &=(~ICANON & ~ECHO);
@@ -511,10 +535,14 @@ static void nms_set_terminal(int s) {
  * the EOF character.
  */
 static void nms_clear_input(void) {
-	int c;
+	int i;
+	
+	ioctl(STDIN_FILENO, FIONREAD, &i);
 
-	while ((c = getchar()) != EOF)
-		;
+	while (i > 0) {
+		getchar();
+		--i;
+	}
 }
 
 /*
