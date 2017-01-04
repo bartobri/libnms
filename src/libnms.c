@@ -169,11 +169,11 @@ char nms_exec(char *string) {
 	// Get cursor position if we are not clearing the screen
 	if (!clearSrc) {
 		origRow = nms_get_cursor_row();
+		
+		// nms_get_cursor_row() may display output in some terminals. So
+		// we need to reposition the cursor to the start of the row.
+		CURSOR_MOVE(origRow, origCol);
 	}
-
-	// nms_get_cursor_row() may display output in some terminals. So
-	// we need to reposition the cursor to the start of the row.
-	CURSOR_MOVE(origRow, origCol);
 
 	// Assign current row/col positions
 	curRow = origRow;
