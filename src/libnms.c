@@ -602,7 +602,7 @@ static int nms_get_cursor_row(void) {
 			row = (row * 10) + (buf[i] - '0');
 		}
 		
-		if (buf[i] == ';') {
+		if (buf[i] == ';' || buf[i] == 'R' || buf[i] == 0) {
 			break;
 		}
 	}
