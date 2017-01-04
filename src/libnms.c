@@ -171,6 +171,10 @@ char nms_exec(char *string) {
 		origRow = nms_get_cursor_row();
 	}
 
+	// nms_get_cursor_row() may display output in some terminals. So
+	// we need to reposition the cursor to the start of the row.
+	CURSOR_MOVE(origRow, origCol);
+
 	// Assign current row/col positions
 	curRow = origRow;
 	curCol = origCol;
@@ -235,8 +239,8 @@ char nms_exec(char *string) {
 	}
 	
 	// Save terminal state, clear screen, and home/hide the cursor
-	CURSOR_SAVE();
 	if (clearSrc) {
+		CURSOR_SAVE();
 		SCREEN_SAVE();
 		CLEAR_SCR();
 		CURSOR_HOME();
@@ -586,13 +590,13 @@ static int nms_get_cursor_row(void) {
 	int row = 0;
 	char buf[10];
 	char *cmd = "\033[6n";
-	
+
 	memset(buf, 0, sizeof(buf));
 
 	write(STDOUT_FILENO, cmd, sizeof(cmd));
-	
+
 	r = read(STDIN_FILENO, buf, sizeof(buf));
-	
+
 	for (i = 0; i < r; ++i) {
 		if (buf[i] == 27 || buf[i] == '[') {
 			continue;
