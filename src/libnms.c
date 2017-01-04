@@ -231,10 +231,11 @@ char nms_exec(char *string) {
 		// Track row count
 		if (string[i] == '\n' || (curCol += list_pointer->width) >= maxCols) {
 			curCol = 0;
-			if (origRow == 0)
-				curRow++;
-			else if (origRow > 0)
+			curRow++;
+			if (curRow == maxRows + 1 && origRow > 0) {
 				origRow--;
+				curRow--;
+			}
 		}
 	}
 	
