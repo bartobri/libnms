@@ -138,7 +138,7 @@ char nms_exec(char *string) {
 	struct charAttr *list_head    = NULL;
 	struct charAttr *list_temp    = NULL;
 	int i, revealed = 0;
-	int maxRows, maxCols, curRow = 0, curCol = 0;
+	int maxRows, maxCols, curRow, curCol, origRow = 0, origCol = 0;
 	char ret = 0;
 
 	// Error if we have an empty string.
@@ -168,14 +168,18 @@ char nms_exec(char *string) {
 	
 	// Get cursor position if we are not clearing the screen
 	if (!clearSrc) {
-		curRow = nms_get_cursor_row();
+		origRow = nms_get_cursor_row();
 	}
+
+	// Assign current row/col positions
+	curRow = origRow;
+	curCol = origCol;
 
 	// Geting input
 	for (i = 0; string[i] != '\0'; ++i) {
 		
 		// Don't go beyond maxRows
-		if (maxRows == 1) {
+		if (curRow - origRow >= maxRows - 1) {
 			break;
 		}
 
@@ -222,8 +226,11 @@ char nms_exec(char *string) {
 
 		// Track row count
 		if (string[i] == '\n' || (curCol += list_pointer->width) >= maxCols) {
-			--maxRows;
 			curCol = 0;
+			if (origRow == 0)
+				curRow++;
+			else if (origRow > 0)
+				origRow--;
 		}
 	}
 	
@@ -273,7 +280,7 @@ char nms_exec(char *string) {
 		if (clearSrc) {
 			CURSOR_HOME();
 		} else {
-			CURSOR_RESTORE();
+			CURSOR_MOVE(origRow, origCol);
 		}
 		
 		// Print new mask for all characters
@@ -304,7 +311,7 @@ char nms_exec(char *string) {
 		if (clearSrc) {
 			CURSOR_HOME();
 		} else {
-			CURSOR_RESTORE();
+			CURSOR_MOVE(origRow, origCol);
 		}
 		
 		// Set revealed flag
