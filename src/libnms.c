@@ -374,23 +374,24 @@ char nms_exec(char *string) {
 	// Flush any input up to this point
 	nms_clear_input();
 
-	// Position cursor
-	if (inputPositionY >= 0 && inputPositionX >= 0) {
-		CURSOR_MOVE(inputPositionY, inputPositionX);
-		CURSOR_SHOW();
-	}
-
-	// User must press a key to continue
-	ret = nms_get_char();
-	if (returnOpts != NULL && strlen(returnOpts) > 0) {
-		while (strchr(returnOpts, ret) == NULL) {
-			BEEP();
-			ret = nms_get_char();
-		}
-	}
-
-	// Restore screen and cursor
 	if (clearSrc) {
+
+		// Position cursor
+		if (inputPositionY >= 0 && inputPositionX >= 0) {
+			CURSOR_MOVE(inputPositionY, inputPositionX);
+			CURSOR_SHOW();
+		}
+	
+		// User must press a key to continue
+		ret = nms_get_char();
+		if (returnOpts != NULL && strlen(returnOpts) > 0) {
+			while (strchr(returnOpts, ret) == NULL) {
+				BEEP();
+				ret = nms_get_char();
+			}
+		}
+	
+		// Restore screen and cursor
 		SCREEN_RESTORE();
 		CURSOR_SHOW();
 		CURSOR_RESTORE();
