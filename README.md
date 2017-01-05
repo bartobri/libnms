@@ -87,6 +87,10 @@ int main(void) {
     nms_set_auto_decrypt(1);
     nms_exec("setec astronomy");
     
+    // Clear screen prior to displaying any output
+    nms_set_clear_scr(1);
+    nms_exec("setec astronomy");
+    
     // Require the user to choose 1, 2, or 3 before returning execution to main()
     nms_set_return_opts("123");
     char c = nms_exec("Choose: [1] apples [2] oranges [3] pears");
@@ -126,6 +130,15 @@ The nms_set_auto_decrypt() function accepts an integer and, if evaluated
 as true, sets a flag that nms_exec() uses to initiate the decryption sequence
 without the need for the user to press a key. If the integer argument
 is evaluated as false, it unsets the flag.
+
+`void nms_set_clear_scr(int)`
+
+The nms_set_clear_scr() function accepts an integer and, if evaluated
+as true, turns on a flag that nms_exec() checks to determine if it will clear
+the screen prior to displaying any output. If the integer argument
+is evaluated as false, it turns off the flag. The flag is off by default.
+Note that the screen contents prior to clearing are saved and restored
+once the effect has completed.
 
 `void nms_set_return_opts(char *)`
 
