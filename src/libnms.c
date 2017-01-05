@@ -84,7 +84,7 @@ static int  nms_get_cursor_row(void);
 static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
 static char *returnOpts     = NULL;         // Return option setting
 static int autoDecrypt      = 0;            // Auto-decrypt flag
-static int clearSrc         = 0;            // clearSrc flag
+static int clearScr         = 0;            // clearScr flag
 static int inputPositionX   = -1;           // X coordinate for input position
 static int inputPositionY   = -1;           // Y coordinate for input position
 
@@ -167,7 +167,7 @@ char nms_exec(char *string) {
 	srand(time(NULL));
 	
 	// Get cursor position if we are not clearing the screen
-	if (!clearSrc) {
+	if (!clearScr) {
 		origRow = nms_get_cursor_row();
 		
 		// nms_get_cursor_row() may display output in some terminals. So
@@ -240,7 +240,7 @@ char nms_exec(char *string) {
 	}
 	
 	// Save terminal state, clear screen, and home/hide the cursor
-	if (clearSrc) {
+	if (clearScr) {
 		CURSOR_SAVE();
 		SCREEN_SAVE();
 		CLEAR_SCR();
@@ -282,7 +282,7 @@ char nms_exec(char *string) {
 	for (i = 0; i < (JUMBLE_SECONDS * 1000) / JUMBLE_LOOP_SPEED; ++i) {
 		
 		// Move cursor to home position
-		if (clearSrc) {
+		if (clearScr) {
 			CURSOR_HOME();
 		} else {
 			CURSOR_MOVE(origRow, origCol);
@@ -313,7 +313,7 @@ char nms_exec(char *string) {
 	while (!revealed) {
 		
 		// Move cursor to home position
-		if (clearSrc) {
+		if (clearScr) {
 			CURSOR_HOME();
 		} else {
 			CURSOR_MOVE(origRow, origCol);
@@ -374,7 +374,7 @@ char nms_exec(char *string) {
 	// Flush any input up to this point
 	nms_clear_input();
 
-	if (clearSrc) {
+	if (clearScr) {
 
 		// Position cursor
 		if (inputPositionY >= 0 && inputPositionX >= 0) {
@@ -462,14 +462,14 @@ void nms_set_auto_decrypt(int setting) {
 }
 
 /*
- * nms_set_clear_scr() sets the clearSrc flag according to the
+ * nms_set_clear_scr() sets the clearScr flag according to the
  * true/false value of the 'setting' argument.
  */
 void nms_set_clear_scr(int setting) {
 	if (setting)
-		clearSrc = 1;
+		clearScr = 1;
 	else
-		clearSrc = 0;
+		clearScr = 0;
 }
 
 /*
