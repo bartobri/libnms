@@ -85,6 +85,7 @@ static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
 static char *returnOpts     = NULL;         // Return option setting
 static int autoDecrypt      = 0;            // Auto-decrypt flag
 static int clearScr         = 0;            // clearScr flag
+static int colorOn          = 1;            // Terminal color flag
 static int inputPositionX   = -1;           // X coordinate for input position
 static int inputPositionY   = -1;           // Y coordinate for input position
 
@@ -354,9 +355,11 @@ char nms_exec(char *string) {
 				revealed = 0;
 			} else {
 				
-				// Set foreground color for character reveal
+				// Set bold and foreground color for character reveal
 				BOLD();
-				FOREGROUND_COLOR(foregroundColor);
+				if (colorOn) {
+					FOREGROUND_COLOR(foregroundColor);
+				}
 				
 				// print source character
 				printf("%s", list_pointer->source);
@@ -470,6 +473,17 @@ void nms_set_clear_scr(int setting) {
 		clearScr = 1;
 	else
 		clearScr = 0;
+}
+
+/*
+ * nms_set_color() sets the colorOn flag according to the
+ * true/false value of the 'setting' argument.
+ */
+void nms_set_color(int setting) {
+	if (setting)
+		colorOn = 1;
+	else
+		colorOn = 0;
 }
 
 /*
