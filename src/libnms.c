@@ -479,7 +479,7 @@ void nms_set_clear_scr(int setting) {
  * nms_set_color() sets the colorOn flag according to the
  * true/false value of the 'setting' argument.
  */
-void nms_set_color(int setting) {
+void nms_use_color(int setting) {
 	if (setting)
 		colorOn = 1;
 	else

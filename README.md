@@ -76,7 +76,7 @@ include "libnms.h"
 
 int main(void) {
 
-    // Apply the effect to the string "SETEC ASTRONOMY"
+    // Apply the effect to the string "setec astronomy"
     nms_exec("setec astronomy");
     
     // Make the foreground color of the decrypted characters "red"
@@ -89,6 +89,10 @@ int main(void) {
     
     // Clear screen prior to displaying any output
     nms_set_clear_scr(1);
+    nms_exec("setec astronomy");
+    
+    // Do not use color (for terminals that don't support color)
+    nms_use_color(0);
     nms_exec("setec astronomy");
     
     // Require the user to choose 1, 2, or 3 before returning execution to main()
@@ -139,6 +143,15 @@ the screen prior to displaying any output. If the integer argument
 is evaluated as false, it turns off the flag. The flag is off by default.
 Note that the screen contents prior to clearing are saved and restored
 once the effect has completed.
+
+`void nms_use_color(int)`
+
+The nms_use_color() function accepts an integer and, if evaluated
+as true, turns on a flag that nms_exec() checks to determine if it will
+use color escape sequences when displaying unencpted characters. If the
+integer argument is evaluated as false, it turns off the flag. The flag
+is on by default. This function exists to support terminals that do not
+have color capabilities.
 
 `void nms_set_return_opts(char *)`
 
