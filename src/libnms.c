@@ -84,7 +84,7 @@ static int  nms_get_cursor_row(void);
 static int foregroundColor  = COLOR_BLUE;   // Foreground color setting
 static char *returnOpts     = NULL;         // Return option setting
 static int autoDecrypt      = 0;            // Auto-decrypt flag
-static int clearSrc         = 1;            // clearSrc flag
+static int clearSrc         = 0;            // clearSrc flag
 static int inputPositionX   = -1;           // X coordinate for input position
 static int inputPositionY   = -1;           // Y coordinate for input position
 
