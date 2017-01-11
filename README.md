@@ -24,7 +24,7 @@ effect to piped data.
 
 Screen Cap:
 
-SCREEN SHOT HERE
+![Screenshot](http://www.brianbarto.info/extern/images/nms/nms.gif)
 
 Table of Contents
 -----------------
