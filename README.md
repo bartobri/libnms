@@ -18,7 +18,7 @@ does not, you may need to use an alternate terminal program like xTerm.
 
 If you wish to get an idea of how this looks or if it will work on your
 system, without needing to implement this library inside a separate program,
-you can download and install my other project, [no-more-secrets project](https://github.com/bartobri/no-more-secrets),
+you can download and install my other project, [no-more-secrets](https://github.com/bartobri/no-more-secrets),
 which implements this same code in a command line tool that applies the
 effect to piped data.
 
