@@ -2,8 +2,8 @@ LibNMS
 ======
 
 This project provides a dynamically linked library that contains the
-necessary functionality to recreate the famous "decrypting text" effect
-shown in the 1992 movie [Sneakers](https://www.youtube.com/watch?v=F5bAa6gFvLs&t=35).
+necessary functionality to recreate the famous data decryption effect
+shown in the 1992 film [Sneakers](https://www.youtube.com/watch?v=F5bAa6gFvLs&t=35).
 
 It's intended purpose is to be used for any software project whose author
 may wish to use this effect when presenting data to the user. This library
