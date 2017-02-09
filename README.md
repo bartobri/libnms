@@ -71,7 +71,7 @@ Usage
 
 **Synopsys**
 ```
-include "libnms.h"
+include "nms.h"
 
 int main(void) {
 
@@ -165,6 +165,14 @@ returns the selection to the calling function.
 The nms_set_input_position() function is meant to be used in conjunction with
 the nms_set_return_opts() function. It sets the cursor position to the given x/y
 coordinates when nms_exec() requires a menu selection from the user.
+
+**Compiling**
+
+You must tell the compiler to include the nms library.
+
+```
+gcc myprogram.c -lnms
+```
 
 License
 -------
