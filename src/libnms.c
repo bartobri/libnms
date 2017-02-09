@@ -26,7 +26,7 @@
 #include <time.h>
 #include <locale.h>
 #include <wchar.h>
-#include "libnms.h"
+#include "nms.h"
 
 // Color identifiers
 #define COLOR_BLACK   0

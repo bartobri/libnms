@@ -17,7 +17,7 @@ LIB=lib
 CC ?= gcc
 CFLAGS ?= -Wextra -Wall -iquote$(SRC) -fpic
 
-HEADERS = libnms.h
+HEADERS = nms.h
 LIBRARIES = libnms.so
 
 .PHONY: all install uninstall clean
