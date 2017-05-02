@@ -74,7 +74,7 @@ Usage
 
 **Synopsys**
 ```
-include "nms.h"
+include <nms.h>
 
 int main(void) {
 
