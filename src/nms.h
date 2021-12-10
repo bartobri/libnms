@@ -5,8 +5,8 @@
  * under the terms of the MIT License. See LICENSE for more details.
  */
 
-#ifndef LIBNMS_H
-#define LIBNMS_H 1
+#ifndef __LIBNMS_H_
+#define __LIBNMS_H_
 
 // Function prototypes
 char nms_exec(char *);
@@ -17,4 +17,4 @@ void nms_set_clear_scr(int);
 void nms_use_color(int);
 void nms_set_input_position(int, int);
 
-#endif
+#endif /* __LIBNMS_H_ */
